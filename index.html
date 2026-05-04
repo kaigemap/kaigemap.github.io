@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>kaigelab</title>
+    <meta
+      name="description"
+      content="kaigemap の個人制作物をまとめたリンク集です。公開中のツールやリポジトリを探せます。"
+    >
+    <meta property="og:title" content="kaigelab">
+    <meta property="og:description" content="kaigemap の個人制作リンク集">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#fafafa">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="kaigelab home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>kaigelab</span>
+      </a>
+      <nav class="header-actions" aria-label="外部リンク">
+        <a class="button ghost" href="https://github.com/kaigemap">GitHub</a>
+        <a class="button ghost" href="https://github.com/kaigemap/kaigemap.github.io">Repo</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="caption">Links for small things I made</p>
+          <h1 id="hero-title">KaigeLab</h1>
+          <p class="lead">
+            配信用の CSS、ボードゲームまわりの小道具、Figma の実験など。GitHub に散らばった制作物を、使う入口としてまとめています。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#works">制作物を見る</a>
+            <a class="button secondary" href="https://github.com/kaigemap">GitHub を開く</a>
+          </div>
+        </div>
+
+        <aside class="hero-panel" aria-label="サイト概要">
+          <div class="profile">
+            <img
+              src="https://avatars.githubusercontent.com/u/12152903?v=4"
+              alt="kaigemap GitHub avatar"
+              width="48"
+              height="48"
+            >
+            <div>
+              <p class="profile-name">kaigemap</p>
+              <p class="profile-id">@kaigemap</p>
+            </div>
+          </div>
+          <div class="mini-stats" aria-label="制作物の概要">
+            <div>
+              <strong id="work-count">0</strong>
+              <span>works</span>
+            </div>
+            <div>
+              <strong id="demo-count">0</strong>
+              <span>demos</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="works" class="works" aria-labelledby="works-title">
+        <div class="section-header">
+          <div>
+            <p class="caption">Works</p>
+            <h2 id="works-title">制作物</h2>
+          </div>
+          <label class="search" aria-label="制作物を検索">
+            <input id="search-input" type="search" placeholder="Search">
+          </label>
+        </div>
+
+        <div class="filter-bar" aria-label="カテゴリ絞り込み">
+          <button class="filter is-active" type="button" data-filter="all">All</button>
+          <button class="filter" type="button" data-filter="tool">Tools</button>
+          <button class="filter" type="button" data-filter="stream">Streaming</button>
+          <button class="filter" type="button" data-filter="design">Design</button>
+          <button class="filter" type="button" data-filter="experiment">Experiments</button>
+        </div>
+
+        <div id="project-grid" class="project-grid" aria-live="polite"></div>
+        <p id="empty-message" class="empty-message" hidden>見つかりませんでした。</p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>kaigelab</span>
+      <span>static portfolio index</span>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
