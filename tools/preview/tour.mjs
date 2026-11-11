@@ -1,0 +1,26 @@
+// node tools/preview/tour.mjs <out-base> [url] [WxH]
+// Records the site itself: drag the arc, wheel, switch to the grid and back.
+import { launch } from '../record/cdp.mjs'
+const [out, url = 'http://localhost:8123/?lang=ja', size = '1280x800'] = process.argv.slice(2)
+const [width, height] = size.split('x').map(Number)
+const s = await launch({ width, height, scale: 1 })
+await s.open(url, 1500)
+await s.startRecording()
+const cx = width / 2, cy = height * 0.4
+await s.sleep(1200)
+await s.drag({ x: cx + 160, y: cy }, { x: cx - 260, y: cy }, 450)
+await s.sleep(1400)
+await s.drag({ x: cx + 160, y: cy }, { x: cx - 120, y: cy }, 260)
+await s.sleep(1400)
+await s.wheel({ x: cx, y: cy }, 240, 10)
+await s.sleep(1400)
+await s.click('#next', { ms: 700 })
+await s.sleep(1200)
+await s.click('#views [data-view=grid]', { ms: 800 })
+await s.sleep(1800)
+await s.moveTo('.card[data-index="1"] .frame', 700)
+await s.sleep(1500)
+await s.click('.card[data-index="4"] .frame', { ms: 700 })
+await s.sleep(2000)
+await s.stopRecording(out, { poster: 0.1, outWidth: width })
+await s.close()
