@@ -43,7 +43,27 @@ const CURSOR_SCRIPT = `(() => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount()
 })()`
 
-export async function launch({ width = 1120, height = 700, scale = 2, cursor = true } = {}) {
+// Finger dot for phone recordings: shows only while a touch is down.
+const TOUCH_SCRIPT = `(() => {
+  const mount = () => {
+    if (document.getElementById('__rec_touch') || !document.body) return
+    const d = document.createElement('div')
+    d.id = '__rec_touch'
+    d.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(40,40,46,.28);border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 10px rgba(0,0,0,.25);opacity:0;transform:translate(-100px,-100px) scale(.6);transition:opacity .18s ease-out'
+    document.body.append(d)
+    let x = -100, y = -100, down = false
+    const place = () => { d.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + (down ? 1 : 0.6) + ')' }
+    const at = (e) => { const t = e.touches && e.touches[0]; if (t) { x = t.clientX; y = t.clientY } }
+    window.addEventListener('touchstart', (e) => { at(e); down = true; d.style.transition = 'opacity .12s ease-out, transform .12s ease-out'; place(); d.style.opacity = '1' }, { capture: true, passive: true })
+    window.addEventListener('touchmove', (e) => { at(e); d.style.transition = 'opacity .12s ease-out'; place() }, { capture: true, passive: true })
+    const up = () => { down = false; d.style.transition = 'opacity .35s ease-out, transform .35s ease-out'; place(); d.style.opacity = '0' }
+    window.addEventListener('touchend', up, { capture: true, passive: true })
+    window.addEventListener('touchcancel', up, { capture: true, passive: true })
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount()
+})()`
+
+export async function launch({ width = 1120, height = 700, scale = 2, cursor = true, touch = false } = {}) {
   const profile = mkdtempSync(join(tmpdir(), 'rec-chrome-'))
   const proc = spawn(CHROME, [
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
@@ -86,8 +106,12 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
   await send('Page.enable')
   await send('Runtime.enable')
   await send('DOM.enable')
-  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: false })
-  if (cursor) await send('Page.addScriptToEvaluateOnNewDocument', { source: CURSOR_SCRIPT })
+  await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: touch })
+  if (touch) {
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 })
+    await send('Emulation.setUserAgentOverride', { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' })
+  }
+  if (cursor) await send('Page.addScriptToEvaluateOnNewDocument', { source: touch ? TOUCH_SCRIPT : CURSOR_SCRIPT })
   await send('Page.bringToFront')
   await send('Emulation.setFocusEmulationEnabled', { enabled: true })
 
@@ -124,6 +148,7 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
     /** Glide the cursor with an ease-in-out curve and a slight arc. */
     async moveTo(target, ms = 650, buttons = 0) {
       const p = typeof target === 'string' ? await s.point(target) : target
+      if (touch && !buttons) { mouse = { x: p.x, y: p.y }; await sleep(Math.min(ms, 400)); return }
       const from = { ...mouse }
       const steps = Math.max(2, Math.round(ms / 16))
       const bend = (Math.hypot(p.x - from.x, p.y - from.y)) * 0.08
@@ -138,13 +163,50 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
       mouse = { x: p.x, y: p.y }
     },
     async click(target, { ms = 650, pause = 120 } = {}) {
+      if (touch) return s.tap(target, { ms })
       await s.moveTo(target, ms)
       await sleep(pause)
       await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: mouse.x, y: mouse.y, button: 'left', buttons: 1, clickCount: 1 })
       await sleep(70)
       await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: mouse.x, y: mouse.y, button: 'left', buttons: 0, clickCount: 1 })
     },
+    /** Finger tap (touch mode). */
+    async tap(target, { ms = 450, dx = 0, dy = 0, scroll = true } = {}) {
+      const p = typeof target === 'string' ? await s.point(target, { dx, dy, scroll }) : target
+      await sleep(ms)
+      mouse = { x: p.x, y: p.y }
+      await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: p.x, y: p.y }] })
+      await sleep(110)
+      await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    },
+    /** Finger swipe from -> to (touch mode); a fast swipe scrolls with momentum. */
+    async swipe(from, to, ms = 380) {
+      const steps = Math.max(2, Math.round(ms / 16))
+      await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: from.x, y: from.y }] })
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps
+        const e = 1 - Math.pow(1 - t, 2)
+        await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e }] })
+        await sleep(16)
+      }
+      await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+      mouse = { x: to.x, y: to.y }
+    },
+    /** Scroll the page by dy CSS px with a finger (positive = content moves up). */
+    async scrollBy(dy, ms = 520) {
+      const x = width * 0.62
+      const y0 = dy > 0 ? height * 0.78 : height * 0.3
+      const span = Math.min(Math.abs(dy), height * 0.5) * Math.sign(dy)
+      let left = dy
+      while (Math.abs(left) > 1) {
+        const part = Math.abs(left) > Math.abs(span) ? span : left
+        await s.swipe({ x, y: y0 }, { x, y: y0 - part }, ms)
+        left -= part
+        await sleep(120)
+      }
+    },
     async drag(from, to, ms = 900) {
+      if (touch) return s.swipe(typeof from === 'string' ? await s.point(from) : from, typeof to === 'string' ? await s.point(to) : to, ms)
       await s.moveTo(from)
       await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: mouse.x, y: mouse.y, button: 'left', buttons: 1, clickCount: 1 })
       await s.moveTo(to, ms, 1)

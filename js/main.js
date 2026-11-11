@@ -48,52 +48,84 @@ const smoothstep = (a, b, x) => {
 
 // ---------- cards ----------
 
-const svgNS = 'http://www.w3.org/2000/svg'
+// How each card shows an app: 'both' = PC screen and phone screen side by side,
+// 'phone' = phone screens only. By default wide screens get 'both' and phones get 'phone';
+// ?device=both or ?device=phone fixes it.
+const DEVICE_PARAM = ['both', 'phone'].includes(params.get('device')) ? params.get('device') : 'auto'
+let device = 'both'
+const pickDevice = () => (DEVICE_PARAM !== 'auto' ? DEVICE_PARAM : document.documentElement.clientWidth < 700 ? 'phone' : 'both')
+
+function makeVideo(src, onPlaying) {
+  const v = document.createElement('video')
+  v.muted = true
+  v.loop = true
+  v.playsInline = true
+  v.preload = 'none'
+  v.setAttribute('muted', '')
+  v.setAttribute('playsinline', '')
+  v.setAttribute('aria-hidden', 'true')
+  v.dataset.src = src
+  v.addEventListener('playing', onPlaying)
+  return v
+}
+
 const cards = APPS.map((app, i) => {
   const el = $('card-template').content.firstElementChild.cloneNode(true)
   el.dataset.index = String(i)
-  el.style.setProperty('--accent', app.accent)
   el.style.viewTransitionName = `card-${i}`
   el.setAttribute('aria-roledescription', 'slide')
-  const img = el.querySelector('.poster')
+  const c = { el, app, i, pc: null, ph: null, hover: false, shades: [], play: el.querySelector('.play') }
+
+  // PC screen
+  const frame = el.querySelector('.frame')
+  const img = frame.querySelector('.poster')
   img.src = app.poster
   img.draggable = false
-  const c = { el, app, i, img, video: null, hover: false, shade: el.querySelector('.shade'), play: el.querySelector('.play') }
   if (app.video) {
-    const v = document.createElement('video')
-    v.muted = true
-    v.loop = true
-    v.playsInline = true
-    v.preload = 'none'
-    v.setAttribute('muted', '')
-    v.setAttribute('playsinline', '')
-    v.setAttribute('aria-hidden', 'true')
-    v.addEventListener('playing', () => el.classList.add('ready'))
-    el.querySelector('.media').append(v)
-    c.video = v
-    c.play.hidden = false
+    c.pc = makeVideo(app.video, () => frame.classList.add('ready'))
+    frame.querySelector('.media').append(c.pc)
+  }
+  c.shades.push(frame.querySelector('.shade'))
+
+  // phone screen, in front of the PC one
+  if (app.phonePoster) {
+    el.classList.add('has-phone')
+    const phone = el.querySelector('.phone')
+    phone.hidden = false
+    const pimg = phone.querySelector('.poster')
+    pimg.src = app.phonePoster
+    pimg.draggable = false
+    if (app.phoneVideo) {
+      c.ph = makeVideo(app.phoneVideo, () => phone.classList.add('ready'))
+      phone.querySelector('.media').append(c.ph)
+    }
+    c.shades.push(phone.querySelector('.shade'))
+  }
+  if (c.pc || c.ph) {
     c.play.addEventListener('click', () => {
       state.userPaused = !state.userPaused
       syncMedia()
     })
-    const frame = el.querySelector('.frame')
-    frame.addEventListener('pointerenter', (e) => {
+    el.addEventListener('pointerenter', (e) => {
       if (state.view === 'grid' && e.pointerType === 'mouse') { c.hover = true; syncMedia() }
     })
-    frame.addEventListener('pointerleave', () => {
+    el.addEventListener('pointerleave', () => {
       if (c.hover) { c.hover = false; syncMedia() }
     })
   }
   el.querySelector('.card-name').textContent = app.name
   el.querySelector('.card-open').href = app.url
   el.querySelector('.card-code').href = app.repo
-  el.querySelector('.frame').addEventListener('click', (e) => {
+  el.querySelector('.screens').addEventListener('click', (e) => {
     if (state.view !== 'grid' || e.target.closest('button')) return
     setView('arc', i)
   })
   track.append(el)
   return c
 })
+
+/** The clips a card shows in the current layout. Phone-only falls back to the PC screen when there is no phone one. */
+const videosOf = (c) => (device === 'phone' ? (c.app.phonePoster ? [c.ph] : [c.pc]) : [c.pc, c.ph]).filter(Boolean)
 
 // ---------- geometry & drawing ----------
 
@@ -104,12 +136,26 @@ function measure() {
   const vh = stage.clientHeight
   const header = 64
   const below = 196 // caption block under the card
+  device = pickDevice()
+  document.body.dataset.device = device
   const maxH = Math.max(150, vh - header - below - 40)
-  const W = Math.round(Math.min(vw < 700 ? vw * 0.8 : vw * 0.56, 780, maxH * 1.6))
-  const H = Math.round(W / 1.6)
-  const R = W * ARC.curve
+  let W, H, R, spacing
+  if (device === 'phone') {
+    H = Math.round(Math.min(maxH, 640, vw < 700 ? vw * 0.62 * (844 / 390) : 9999))
+    W = Math.round(H * (390 / 844))
+    R = H * 1.6 * 0.62 * ARC.curve
+    spacing = 1.14
+  } else {
+    // PC screen (16:10) and phone screen (390:844) side by side: height is 47.53% of the pair's width
+    const PAIR = 0.4753
+    W = Math.round(Math.min(vw < 700 ? vw * 0.9 : vw * 0.64, 1000, maxH / PAIR))
+    H = Math.round(W * PAIR)
+    R = W * 0.8 * ARC.curve
+    spacing = 1.06
+  }
   const cy = Math.round(header + Math.max(12, (vh - header - H - below) * 0.42) + H / 2)
-  geo = { W, H, R, step: (W * ARC.spacing) / R, px: W * ARC.spacing, cy }
+  geo = { W, H, R, step: (W * spacing) / R, px: W * spacing, cy }
+
   stage.style.setProperty('--w', `${W}px`)
   stage.style.setProperty('--h', `${H}px`)
   stage.style.setProperty('--cy', `${cy}px`)
@@ -129,14 +175,15 @@ function render() {
     st.opacity = visible ? (1 - smoothstep(1.6, 2.6, a)).toFixed(3) : '0'
     st.visibility = visible ? '' : 'hidden'
     st.zIndex = String(100 - Math.round(a * 10))
-    c.shade.style.opacity = (Math.min(a, 1) * 0.55).toFixed(3)
+    const shade = (Math.min(a, 1) * 0.55).toFixed(3)
+    for (const sh of c.shades) sh.style.opacity = shade
   }
 }
 
 function clearArcStyles() {
   for (const c of cards) {
     for (const p of ['transform', 'opacity', 'visibility', 'zIndex']) c.el.style[p] = ''
-    c.shade.style.opacity = ''
+    for (const sh of c.shades) sh.style.opacity = ''
   }
 }
 
@@ -247,7 +294,7 @@ function tap(target) {
   if (!card) return
   const i = Number(card.dataset.index)
   if (i !== state.active) goTo(i)
-  else if (cards[i].video) {
+  else if (videosOf(cards[i]).length) {
     state.userPaused = !state.userPaused
     syncMedia()
   }
@@ -305,14 +352,13 @@ function updateActive(force = false) {
   const first = state.active === -1
   state.active = i
   const app = APPS[i]
-  stage.style.setProperty('--accent', app.accent)
   fillCaption(!first && !force)
   dots.forEach((d, k) => d.setAttribute('aria-current', k === i ? 'true' : 'false'))
   cards.forEach((c) => {
     const isActive = c.i === i
     c.el.classList.toggle('active', isActive)
     if (state.view === 'arc') c.el.setAttribute('aria-hidden', isActive ? 'false' : 'true')
-    if (isActive && c.video && !first) c.video.currentTime = 0
+    if (isActive && !first) for (const v of videosOf(c)) v.currentTime = 0
   })
   if (!first) history.replaceState(null, '', `${location.pathname}${location.search}#${encodeURIComponent(app.id)}`)
   syncMedia()
@@ -336,20 +382,24 @@ function fillCaption(animate) {
 }
 
 function syncMedia() {
+  const t = STRINGS[state.lang]
   for (const c of cards) {
-    if (!c.video) continue
+    const shown = videosOf(c)
+    c.play.hidden = !shown.length
+    for (const v of [c.pc, c.ph]) if (v && !shown.includes(v) && !v.paused) v.pause()
+    if (!shown.length) continue
     const near = state.view === 'arc' && Math.abs(delta(c.i, state.active)) <= 1
     const want = state.view === 'arc' ? c.i === state.active && !state.userPaused : c.hover
-    if ((near || want) && !c.video.getAttribute('src')) {
-      c.video.preload = 'auto'
-      c.video.src = c.app.video
+    for (const v of shown) {
+      if ((near || want) && !v.getAttribute('src')) {
+        v.preload = 'auto'
+        v.src = v.dataset.src
+      }
+      if (want) v.play().catch(() => {})
+      else if (!v.paused) v.pause()
     }
-    if (want) c.video.play().catch(() => {})
-    else if (!c.video.paused) c.video.pause()
-    const t = STRINGS[state.lang]
-    const paused = state.userPaused
-    c.el.classList.toggle('paused', paused)
-    c.play.setAttribute('aria-label', paused ? t.play : t.pause)
+    c.el.classList.toggle('paused', state.userPaused)
+    c.play.setAttribute('aria-label', state.userPaused ? t.play : t.pause)
   }
 }
 
@@ -439,7 +489,10 @@ addEventListener('resize', () => {
   resizeQueued = true
   requestAnimationFrame(() => {
     resizeQueued = false
-    if (state.view === 'arc') { measure(); render() }
+    const before = device
+    measure()
+    if (state.view === 'arc') render()
+    if (device !== before) syncMedia()
   })
 })
 reduceMotion.addEventListener('change', () => { state.userPaused = reduceMotion.matches; syncMedia() })

@@ -1,5 +1,6 @@
 // The apps shown on the site. Clips are recorded with tools/record (see README).
-// video: muted loop clip (optional). poster: still image, also used when motion is reduced.
+// video / poster: the PC screen. phoneVideo / phonePoster: the same app on a phone (both optional).
+// Posters are also what shows when motion is reduced.
 export const APPS = [
   {
     id: 'hakogazou',
@@ -8,7 +9,8 @@ export const APPS = [
     repo: 'https://github.com/kaigemap/hakogazou',
     video: 'media/hakogazou.mp4',
     poster: 'media/hakogazou.jpg',
-    accent: '#ff8a3d',
+    phoneVideo: 'media/hakogazou-phone.mp4',
+    phonePoster: 'media/hakogazou-phone.jpg',
     desc: {
       ja: '6面の絵から、ボードゲームの箱を立体で',
       en: 'Six face images in, a 3D board game box out',
@@ -23,7 +25,8 @@ export const APPS = [
     repo: 'https://github.com/kaigemap/zatsucard',
     video: 'media/zatsucard.mp4',
     poster: 'media/zatsucard.jpg',
-    accent: '#e8590c',
+    phoneVideo: 'media/zatsucard-phone.mp4',
+    phonePoster: 'media/zatsucard-phone.jpg',
     desc: {
       ja: 'CSV から、テストプレイ用のカードをまとめて',
       en: 'Playtest cards in bulk, straight from a CSV',
@@ -38,7 +41,6 @@ export const APPS = [
     repo: 'https://github.com/kaigemap/discord-streamkit-layer',
     video: 'media/discord-streamkit-layer.mp4',
     poster: 'media/discord-streamkit-layer.jpg',
-    accent: '#5865f2',
     desc: {
       ja: 'Discord StreamKit のオーバーレイを見ながら整える',
       en: 'Style your Discord StreamKit overlay by eye',
@@ -53,7 +55,8 @@ export const APPS = [
     repo: 'https://github.com/kaigemap/udocards',
     video: 'media/udocards.mp4',
     poster: 'media/udocards.jpg',
-    accent: '#4dabf7',
+    phoneVideo: 'media/udocards-phone.mp4',
+    phonePoster: 'media/udocards-phone.jpg',
     desc: {
       ja: '画像から、ユドナリウム用の山札を',
       en: 'Card decks for Udonarium, made from images',
@@ -68,7 +71,8 @@ export const APPS = [
     repo: 'https://github.com/kaigemap/GameMarket-Blog-HTML-Utility',
     video: 'media/GameMarket-Blog-HTML-Utility.mp4',
     poster: 'media/GameMarket-Blog-HTML-Utility.jpg',
-    accent: '#8b93a1',
+    phoneVideo: 'media/GameMarket-Blog-HTML-Utility-phone.mp4',
+    phonePoster: 'media/GameMarket-Blog-HTML-Utility-phone.jpg',
     desc: {
       ja: 'ゲームマーケットのブログで、画像のはみ出しを直す',
       en: 'Stops images overflowing in Game Market blog posts',
@@ -83,7 +87,8 @@ export const APPS = [
     repo: 'https://github.com/kaigemap/BrowserSenkou',
     video: '',
     poster: 'media/BrowserSenkou.jpg',
-    accent: '#7c4dff',
+    phoneVideo: '',
+    phonePoster: 'media/BrowserSenkou-phone.jpg',
     desc: {
       ja: 'ブラウザで供えるお線香',
       en: 'An incense stick, offered in your browser',

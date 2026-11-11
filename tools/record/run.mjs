@@ -13,13 +13,15 @@ const slugs = wanted.length ? wanted : readdirSync(join(here, 'flows')).filter((
 
 for (const slug of slugs) {
   const flow = await import(join(here, 'flows', `${slug}.mjs`))
-  const s = await launch(flow.options)
+  const phone = slug.endsWith('.phone')
+  const s = await launch(phone ? { width: 390, height: 844, scale: 2, touch: true, ...flow.options } : flow.options)
   try {
     await s.open(flow.url, flow.settle ?? 1200)
     if (flow.prepare) await flow.prepare(s)
     await s.startRecording()
     await flow.default(s)
-    const r = await s.stopRecording(join(media, slug), { poster: flow.poster ?? 0.6 })
+    const name = phone ? slug.replace(/\.phone$/, '-phone') : slug
+    const r = await s.stopRecording(join(media, name), { poster: flow.poster ?? 0.6, ...(phone ? { outWidth: 540, crf: 27 } : {}) })
     console.log(`${slug}: ${r.frames} frames, ${r.seconds.toFixed(1)}s`)
   } catch (e) {
     console.error(`${slug}: ${e.message}`)

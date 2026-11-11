@@ -1,9 +1,3 @@
-@property --accent {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: #888888;
-}
-
 :root {
   color-scheme: light dark;
   --bg: #f3f2ee;
@@ -12,7 +6,6 @@
   --line: rgba(24, 24, 27, 0.12);
   --chip: rgba(24, 24, 27, 0.06);
   --frame: #e6e4de;
-  --glow-mix: 26%;
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 14px 34px -10px rgba(0, 0, 0, 0.28), 0 44px 90px -30px rgba(0, 0, 0, 0.3);
   --btn-bg: #18181b;
   --btn-fg: #fafafa;
@@ -28,7 +21,6 @@
     --line: rgba(255, 255, 255, 0.14);
     --chip: rgba(255, 255, 255, 0.08);
     --frame: #1b1b1f;
-    --glow-mix: 34%;
     --card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 26px 64px -14px rgba(0, 0, 0, 0.85);
     --btn-bg: #ececee;
     --btn-fg: #0e0e10;
@@ -179,7 +171,6 @@ body[data-view="grid"] .bar {
   --w: 600px;
   --h: 375px;
   --cy: 320px;
-  --accent: #888888;
   position: relative;
   height: 100svh;
   min-height: 600px;
@@ -191,18 +182,6 @@ body[data-view="grid"] .bar {
 }
 
 .stage.grabbing { cursor: grabbing; }
-
-.glow {
-  position: absolute;
-  left: 50%;
-  top: var(--cy);
-  width: min(1200px, 130vw);
-  aspect-ratio: 1.5;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) var(--glow-mix), transparent), transparent);
-  transition: --accent 0.7s var(--ease-out);
-  pointer-events: none;
-}
 
 .track { position: absolute; inset: 0; }
 
@@ -229,6 +208,8 @@ body:not(.ready) * { transition: none !important; }
   transform: translateZ(0);
 }
 
+.screens { position: relative; }
+
 .media img,
 .media video {
   position: absolute;
@@ -240,7 +221,35 @@ body:not(.ready) * { transition: none !important; }
 }
 
 .media video { opacity: 0; transition: opacity 0.35s ease; }
-.card.ready .media video { opacity: 1; }
+.ready > .media video { opacity: 1; }
+
+/* PC screen and phone screen side by side, same height (widths are 16:10 and 390:844 shares of the row) */
+body[data-device="both"] .screens { display: flex; justify-content: center; gap: 2%; }
+body[data-device="both"] .frame { width: 76.04%; flex: none; }
+
+.phone {
+  position: relative;
+  flex: none;
+  width: 21.96%;
+  aspect-ratio: 390 / 844;
+  overflow: hidden;
+  border: 4px solid #0c0c0e;
+  border-radius: 22px;
+  background: #0c0c0e;
+  box-shadow: var(--card-shadow);
+  transform: translateZ(0);
+}
+.phone[hidden] { display: none; }
+.phone .media { position: absolute; inset: 0; overflow: hidden; border-radius: 18px; }
+@media (max-width: 700px) {
+  .phone { border-width: 2px; border-radius: 10px; }
+  .phone .media { border-radius: 8px; }
+}
+
+body[data-device="phone"] .card.has-phone .frame { display: none; }
+body[data-device="phone"] .card.has-phone .phone { width: 100%; border-width: 5px; border-radius: 30px; }
+body[data-device="phone"] .card.has-phone .phone .media { border-radius: 25px; }
+body[data-device="phone"] .card:not(.has-phone) .frame { aspect-ratio: 390 / 844; border-radius: 30px; }
 
 .shade {
   position: absolute;
@@ -252,7 +261,7 @@ body:not(.ready) * { transition: none !important; }
 
 .play {
   position: absolute;
-  right: 10px;
+  left: 10px;
   bottom: 10px;
   display: grid;
   place-items: center;
@@ -283,7 +292,7 @@ body[data-view="grid"] .play { visibility: hidden; }
 .caption {
   position: absolute;
   left: 50%;
-  top: calc(var(--cy) + var(--h) / 2 + 30px);
+  top: calc(var(--cy) + var(--h) / 2 + 28px);
   z-index: 150;
   width: min(560px, 100% - 32px);
   transform: translateX(-50%);
@@ -371,13 +380,12 @@ body[data-view="grid"] .stage {
   cursor: auto;
 }
 
-body[data-view="grid"] .glow,
 body[data-view="grid"] .caption { display: none; }
 
 body[data-view="grid"] .track {
   position: static;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
   gap: 36px 24px;
   max-width: 1200px;
   margin: 0 auto;
@@ -392,10 +400,11 @@ body[data-view="grid"] .card {
   will-change: auto;
 }
 
-body[data-view="grid"] .frame { cursor: pointer; transition: transform 0.35s var(--ease-out); }
+body[data-view="grid"] .screens { cursor: pointer; transition: transform 0.35s var(--ease-out); }
 @media (hover: hover) {
-  body[data-view="grid"] .frame:hover { transform: translateY(-3px); }
+  body[data-view="grid"] .screens:hover { transform: translateY(-3px); }
 }
+body[data-view="grid"][data-device="phone"] .track { grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
 
 body[data-view="grid"] .card-text { display: block; padding: 14px 2px 0; }
 .card-name { margin: 0 0 2px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }

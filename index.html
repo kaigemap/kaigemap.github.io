@@ -50,7 +50,6 @@
     <main>
       <h1 class="sr-only">kaigelab</h1>
       <section class="stage" id="stage" aria-roledescription="carousel">
-        <div class="glow" aria-hidden="true"></div>
         <div class="track" id="track"></div>
         <div class="caption" id="caption">
           <div aria-live="polite">
@@ -72,11 +71,15 @@
 
     <template id="card-template">
       <article class="card">
-        <div class="frame">
-          <div class="media">
-            <img class="poster" alt="" decoding="async">
+        <div class="screens">
+          <div class="frame">
+            <div class="media"><img class="poster" alt="" decoding="async"></div>
+            <div class="shade" aria-hidden="true"></div>
           </div>
-          <div class="shade" aria-hidden="true"></div>
+          <div class="phone" hidden>
+            <div class="media"><img class="poster" alt="" decoding="async"></div>
+            <div class="shade" aria-hidden="true"></div>
+          </div>
           <button type="button" class="play" hidden><svg viewBox="0 0 24 24" aria-hidden="true" class="fill"><path class="i-pause" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/><path class="i-play" d="M7.5 4.8v14.4L19 12z"/></svg></button>
         </div>
         <div class="card-text">
