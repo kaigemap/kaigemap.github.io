@@ -173,7 +173,7 @@ const slots = APPS.map((app, i) => {
   img.draggable = false
   img.onload = () => face.replaceChildren(img)
   img.src = `media/tiles/${app.id}.webp`
-  tile.addEventListener('click', () => goTo(i))
+  tile.addEventListener('click', () => { if (!reel.suppress) goTo(i) })
   const t = { el, pos: el.querySelector('.tile-pos'), tile, light: el.querySelector('.tile-light'), hover: new Spring(320, 22, 1), over: false, lx: 0, ly: 0, tlx: 0, tly: 0 }
   tile.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { t.over = true; t.hover.to = 1.07; showTileTip(t, i); kick() } })
   tile.addEventListener('pointerleave', () => { t.over = false; t.hover.to = 1; t.tlx = t.tly = 0; hideTileTip(); kick() })
@@ -587,6 +587,61 @@ document.addEventListener('keydown', (e) => {
   else return
   e.preventDefault()
 })
+
+// ---------- the reel can be dragged and flicked: sideways on a phone, up and down on a PC ----------
+
+const reel = { id: null, x0: 0, y0: 0, p0: 0, start: 0, per: 98, axis: null, moved: false, samples: [], suppress: false }
+stage.addEventListener('pointerdown', (e) => {
+  reel.suppress = false
+  if (state.view !== 'dial' || (e.pointerType === 'mouse' && e.button !== 0) || !e.target.closest('.wheel, .tile')) return
+  takeOver()
+  Object.assign(reel, { id: e.pointerId, x0: e.clientX, y0: e.clientY, p0: state.p, moved: false, axis: null, samples: [] })
+})
+stage.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== reel.id) return
+  const dx = e.clientX - reel.x0
+  const dy = e.clientY - reel.y0
+  if (!reel.moved) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return
+    reel.moved = true
+    state.touching = true
+    // along the reel: sideways on a phone (an up-down swipe there scrolls like the page), up and down on a PC
+    reel.axis = geo.wide ? 'y' : Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y'
+    reel.per = geo.wide || reel.axis === 'x' ? geo.spacing : stepPx
+    reel.start = reel.axis === 'x' ? e.clientX : e.clientY
+    reel.p0 = state.p
+    stage.setPointerCapture(e.pointerId)
+    stage.classList.add('grabbing')
+    hideTileTip()
+  }
+  const at = reel.axis === 'x' ? e.clientX : e.clientY
+  const p = clamp(reel.p0 - (at - reel.start) / reel.per, 0, N - 1)
+  scrollTo(0, Math.round(p * stepPx))
+  reel.samples.push([e.timeStamp, p])
+  while (reel.samples.length > 2 && e.timeStamp - reel.samples[0][0] > 80) reel.samples.shift()
+  kick()
+})
+function letGo(e) {
+  if (e.pointerId !== reel.id) return
+  reel.id = null
+  state.touching = false
+  stage.classList.remove('grabbing')
+  if (!reel.moved) return
+  reel.suppress = true
+  const [t0, p0] = reel.samples[0] || [0, state.p]
+  const [t1, p1] = reel.samples[reel.samples.length - 1] || [0, state.p]
+  const v = t1 > t0 ? clamp(((p1 - p0) / (t1 - t0)) * 1000, -14, 14) : 0 // items per second
+  const from = Math.round(reel.p0)
+  const to = clamp(Math.round(state.p + v * 0.18), Math.max(0, from - 3), Math.min(N - 1, from + 3))
+  // the flick carries on with the speed it had, then settles on an item
+  glide.x = state.p
+  glide.v = reduced ? 0 : v
+  glide.to = to
+  state.gliding = true
+  kick()
+}
+stage.addEventListener('pointerup', letGo)
+stage.addEventListener('pointercancel', letGo)
 
 // ---------- the wall ----------
 
