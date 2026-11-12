@@ -1,5 +1,7 @@
-// kaigelab: a dial of tiles at the edge of the screen; turning it swaps the PC and phone screens beside it.
-// Design and every number below: docs/DESIGN.md (section numbers in comments).
+// kaigelab: a dial of tiles at the edge of the screen. Scrolling the page turns it and swaps the PC and phone
+// screens beside it: the page is a stack of invisible sections (one per item, snapping), the stage stays fixed.
+// Design: docs/DESIGN.md. Changed since: the page's own scroll drives the dial (wheel, trackpad, flick),
+// no tick marks or needle, icon buttons with tooltips, no serial numbers.
 import { APPS } from './apps.js'
 import { LANGS, STRINGS, pickLang, store } from './i18n.js'
 
@@ -19,11 +21,10 @@ const shownUrl = (url, short) => {
   return u.host === 'kaigemap.github.io' || u.host === 'github.com' ? path.replace(/^\/kaigemap(?=\/)/, '') : u.host
 }
 
-// ---------- springs (§6.2): m = 1, semi-implicit Euler in 1/120 s steps ----------
+// ---------- springs: m = 1, semi-implicit Euler in 1/120 s steps ----------
 
 class Spring {
   constructor(k, c, x = 0) { this.k = k; this.c = c; this.x = x; this.v = 0; this.to = x }
-  set(k, c) { this.k = k; this.c = c }
   step(dt) {
     let t = dt
     while (t > 1e-6) {
@@ -36,29 +37,30 @@ class Spring {
   done(eps = 4e-4, veps = 2e-3) { return Math.abs(this.x - this.to) < eps && Math.abs(this.v) < veps }
   snap() { this.x = this.to; this.v = 0 }
 }
-const SETTLE = [170, 18]
-const WHEEL = [260, 32]
 
 const startIndex = Math.max(0, APPS.findIndex((a) => a.id === decodeURIComponent(location.hash.slice(1))))
-const pos = new Spring(...SETTLE, startIndex) // the dial position, in items
-const ps = new Spring(120, 19, startIndex) // PC screen layer follows a little late
+const ps = new Spring(120, 19, startIndex) // PC screen layer follows the scroll a little late
 const pp = new Spring(90, 15, startIndex) // phone screen layer follows later still
 const stretch = new Spring(300, 20, 0)
-const needle = new Spring(900, 24, 0)
 const introPc = new Spring(140, 20, 1)
+// when the scroll stops between two items, this spring carries the page to one of them (slight overshoot)
+const glide = new Spring(170, 18, 0)
 const introPh = new Spring(140, 20, 1)
 
 const state = {
   lang: pickLang(),
   view: params.get('view') === 'wall' || params.get('view') === 'grid' ? 'wall' : params.get('view') === 'dial' ? 'dial' : store.get('view') === 'wall' ? 'wall' : 'dial',
+  p: startIndex, // where the scroll is, in items
+  v: 0, // how fast, in items per second
+  lastScroll: 0,
+  scrollFrom: null, // where this scroll gesture started, in items
+  gliding: false,
+  touching: false,
   active: -1,
-  dragging: false,
-  wheel: null,
   userPaused: reduced,
   settledAt: 0,
-  lastNotch: 0,
-  needleCell: null,
 }
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
 
 // ---------- building the page ----------
 
@@ -66,6 +68,12 @@ const stage = $('stage')
 const slotsEl = $('slots')
 const pairsEl = $('pairs')
 const caption = $('caption')
+const scroller = $('scroller')
+for (let i = 0; i < N; i++) {
+  const s = document.createElement('div')
+  s.className = 'snap'
+  scroller.append(s)
+}
 
 const mediaPath = (app, kind, small) => `media/${app.id}${kind === 'phone' ? '-phone' : small ? '-s' : ''}`
 
@@ -111,9 +119,7 @@ function loadVideo(s) {
 
 function makePc(app) {
   const el = tpl('t-pc')
-  const url = el.querySelector('.url')
-  url.href = app.url
-  return { el, url, screen: makeScreen(el.querySelector('.pc-screen'), app, 'pc') }
+  return { el, url: el.querySelector('.url'), screen: makeScreen(el.querySelector('.pc-screen'), app, 'pc') }
 }
 function makePhone(app) {
   const el = tpl('t-phone')
@@ -135,19 +141,31 @@ const pairs = APPS.map((app, i) => {
   title.querySelector('.name').textContent = app.name
   wrap.append(pc.el, phone.el, title)
   pairsEl.append(wrap)
-  for (const s of [pc.screen, phone.screen]) {
-    if (!s) continue
-    s.screen.addEventListener('click', () => { if (!drag.suppress && state.active === i) togglePause() })
-  }
+  for (const s of [pc.screen, phone.screen]) if (s) s.screen.addEventListener('click', () => { if (state.active === i) togglePause() })
   return { app, i, wrap, pc, phone, title, name: title.querySelector('.name'), on: false, playing: false }
 })
 
+// one floating tooltip for the tiles (they turn with the dial, so a CSS tooltip would turn too)
+const tileTip = document.createElement('div')
+tileTip.className = 'tile-tip'
+tileTip.setAttribute('aria-hidden', 'true')
+document.body.append(tileTip)
+function showTileTip(t, i) {
+  const b = t.tile.getBoundingClientRect()
+  tileTip.textContent = APPS[i].name
+  tileTip.classList.add('on')
+  const w = tileTip.offsetWidth
+  const h = tileTip.offsetHeight
+  const x = geo.wide ? b.right + 12 : clamp(b.left + b.width / 2 - w / 2, 8, innerWidth - w - 8)
+  const y = geo.wide ? b.top + b.height / 2 - h / 2 : b.top - h - 10
+  tileTip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`
+}
+const hideTileTip = () => tileTip.classList.remove('on')
+
 const slots = APPS.map((app, i) => {
   const el = tpl('t-tile')
-  const pos_ = el.querySelector('.tile-pos')
   const tile = el.querySelector('.tile')
   const face = el.querySelector('.tile-face')
-  const light = el.querySelector('.tile-light')
   face.textContent = app.name.slice(0, 1)
   const img = new Image()
   img.alt = ''
@@ -155,10 +173,10 @@ const slots = APPS.map((app, i) => {
   img.draggable = false
   img.onload = () => face.replaceChildren(img)
   img.src = `media/tiles/${app.id}.webp`
-  tile.addEventListener('click', () => { if (!drag.suppress) goTo(i) })
-  const t = { el, pos: pos_, tile, light, hover: new Spring(320, 22, 1), over: false, lx: 0, ly: 0, tlx: 0, tly: 0 }
-  tile.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { t.over = true; t.hover.to = 1.07; kick() } })
-  tile.addEventListener('pointerleave', () => { t.over = false; t.hover.to = 1; t.tlx = t.tly = 0; kick() })
+  tile.addEventListener('click', () => goTo(i))
+  const t = { el, pos: el.querySelector('.tile-pos'), tile, light: el.querySelector('.tile-light'), hover: new Spring(320, 22, 1), over: false, lx: 0, ly: 0, tlx: 0, tly: 0 }
+  tile.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { t.over = true; t.hover.to = 1.07; showTileTip(t, i); kick() } })
+  tile.addEventListener('pointerleave', () => { t.over = false; t.hover.to = 1; t.tlx = t.tly = 0; hideTileTip(); kick() })
   tile.addEventListener('pointerdown', () => { t.hover.to = 0.94; kick() })
   tile.addEventListener('pointerup', () => { t.hover.to = t.over ? 1.07 : 1; kick() })
   tile.addEventListener('pointermove', (e) => {
@@ -172,9 +190,10 @@ const slots = APPS.map((app, i) => {
   return t
 })
 
-// ---------- layout (§2) ----------
+// ---------- layout ----------
 
 let geo = null
+let stepPx = innerHeight
 const probe = document.createElement('div')
 probe.style.cssText = 'position:fixed;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)'
 document.body.append(probe)
@@ -247,7 +266,6 @@ function measure() {
   st.setProperty('--tile', `${g.tile}px`)
   st.setProperty('--rt', `${g.rt}px`)
   st.setProperty('--loupe', `${g.loupe}px`)
-  st.setProperty('--step', `${g.step}rad`)
   st.setProperty('--ns', `${g.ns}px`)
   st.setProperty('--whyLines', String(g.whyLines ?? 3))
   for (const p of pairs) {
@@ -255,14 +273,12 @@ function measure() {
     sizeScreen(p.pc.screen, g.small)
     if (p.phone.screen) sizeScreen(p.phone.screen, false)
   }
+  stepPx = scroller.firstElementChild?.offsetHeight || innerHeight
   fitNames()
   placeCaption()
 }
 
-/**
- * Long names must never run into the phone frame (§2.2, §2.3).
- * Wide: one line, shrinking down to 40px. Phone: one line down to 24px, then two lines.
- */
+/** Long names must never run into the phone frame. Wide: one line down to 40px. Phone: one line down to 24px, then two lines. */
 function fitNames() {
   const max = geo.titleW
   for (const p of pairs) {
@@ -274,7 +290,6 @@ function fitNames() {
     const floor = geo.wide ? geo.nsMin : 24
     while (size > floor && n.scrollWidth > max + 0.5) { size -= 1; set() }
     if (n.scrollWidth <= max + 0.5 || geo.wide) continue
-    // still too long on a phone: let it take two lines, as large as the longest word allows
     n.style.whiteSpace = 'normal'
     size = geo.ns - 2
     set()
@@ -282,19 +297,14 @@ function fitNames() {
   }
 }
 
-// ---------- the dial and the screens, drawn every frame (§3.3, §6.4, §6.5) ----------
+// ---------- drawing: the dial and the screens follow the scroll position ----------
 
-const rubber = (p) => {
-  if (p < 0) return -1.2 * (1 - 1 / ((-p * 0.55) / 1.2 + 1))
-  if (p > N - 1) return N - 1 + 1.2 * (1 - 1 / (((p - (N - 1)) * 0.55) / 1.2 + 1))
-  return p
-}
 const ease = (d) => d + 0.11 * Math.sin((Math.PI / 2) * clamp(d, -1, 1))
 
 function draw() {
   const g = geo
-  const pd = rubber(pos.x)
-  const pDial = reduced ? pd : pd - 0.045 * Math.sin(2 * Math.PI * pd) // notches (§6.2)
+  const p = state.p
+  const pDial = reduced ? p : p - 0.03 * Math.sin(2 * Math.PI * p) // a light notch at each item
   const base = g.wide ? 0 : -Math.PI / 2
   const inner = g.wide ? 0 : Math.PI / 2
   const e = reduced ? 0 : stretch.x
@@ -316,13 +326,6 @@ function draw() {
     t.light.style.transform = `rotate(${(-(th + inner)).toFixed(5)}rad) translate(${t.lx.toFixed(2)}px, ${t.ly.toFixed(2)}px)`
     t.tile.style.setProperty('--lift', clamp((h - 1) / 0.07, 0, 1).toFixed(3))
   }
-  // the needle flicks each time a notch passes under it (§6.4)
-  const cell = Math.floor(pDial + 0.5)
-  if (state.needleCell !== null && cell !== state.needleCell && !reduced) needle.v += -Math.sign(pos.v || 1) * 220 * Math.min(1, Math.abs(pos.v) / 4)
-  state.needleCell = cell
-  stage.querySelector('.needle').style.transform = `rotate(${needle.x.toFixed(3)}deg)`
-
-  // screens (§6.5)
   const along = (px) => (g.wide ? `translate3d(0, ${px.toFixed(2)}px, 0)` : `translate3d(${px.toFixed(2)}px, 0, 0)`)
   for (const p of pairs) {
     const ds = p.i - ps.x
@@ -344,7 +347,7 @@ function draw() {
   leaveCheck()
 }
 
-// ---------- the loop ----------
+// ---------- the loop: runs while the page scrolls or anything is still moving ----------
 
 let raf = 0
 let last = 0
@@ -357,36 +360,72 @@ function kick() {
 function tick(now) {
   const dt = Math.min(1 / 20, (now - last) / 1000)
   last = now
+  if (state.gliding) {
+    if (reduced) glide.snap()
+    else glide.step(dt)
+    scrollTo(0, Math.round(clamp(glide.x, 0, N - 1) * stepPx))
+    if (glide.done()) { state.gliding = false; scrollTo(0, Math.round(glide.to * stepPx)) }
+  }
+  const before = state.p
+  state.p = clamp(scrollY / stepPx, 0, N - 1)
+  const v = dt > 0 ? (state.p - before) / dt : 0
+  state.v += (v - state.v) * 0.35
+  ps.to = pp.to = state.p
   if (reduced) {
-    if (!state.dragging) pos.snap()
-    ps.to = pp.to = clamp(pos.x, 0, N - 1)
-    ps.snap(); pp.snap(); stretch.snap(); needle.snap(); introPc.snap(); introPh.snap()
+    ps.snap(); pp.snap(); stretch.snap(); introPc.snap(); introPh.snap()
     for (const t of slots) t.hover.snap()
   } else {
-    if (!state.dragging) pos.step(dt)
-    ps.to = pp.to = clamp(pos.x, 0, N - 1)
     ps.step(dt)
     pp.step(dt)
-    stretch.to = Math.min(Math.abs(pos.v) * 0.012, 0.1)
+    stretch.to = Math.min(Math.abs(state.v) * 0.012, 0.1)
     stretch.step(dt)
-    needle.step(dt)
     introPc.step(dt)
     if (introDelay > 0) introDelay -= dt
     else introPh.step(dt)
     for (const t of slots) t.hover.step(dt)
   }
   draw()
-  const moving = state.dragging || state.wheel || !pos.done() || Math.abs(pos.v) > 0.05
+  const scrolling = now - state.lastScroll < 140
+  // the hand has let go and the page stopped between two items: glide to one, leaning the way it was going
+  if (!scrolling && !state.gliding && !state.touching && Math.abs(state.p - Math.round(state.p)) > 0.002) {
+    const moved = state.scrollFrom == null ? 0 : state.p - state.scrollFrom
+    const to = Math.abs(moved) >= 0.06 ? (moved > 0 ? Math.ceil(state.p - 0.02) : Math.floor(state.p + 0.02)) : Math.round(state.p)
+    startGlide(to)
+  }
+  if (!scrolling && !state.gliding) state.scrollFrom = null
+  const moving = scrolling || state.gliding || Math.abs(state.p - Math.round(state.p)) > 0.004
   caption.classList.toggle('moving', moving)
-  if (moving) { caption.classList.remove('shown'); state.settledAt = 0; closeWhy() }
+  if (moving) { caption.classList.remove('shown'); state.settledAt = 0; closeWhy(); hideTileTip() }
   else if (!state.settledAt) { state.settledAt = now; onSettle() }
-  const busy = moving || !ps.done() || !pp.done() || !stretch.done(1e-3) || !needle.done(0.01, 0.05) || !introPc.done() || !introPh.done() ||
+  if (!moving) state.v = 0
+  const busy = moving || !ps.done() || !pp.done() || !stretch.done(1e-3) || !introPc.done() || !introPh.done() ||
     slots.some((t) => !t.hover.done(1e-3) || Math.abs(t.tlx - t.lx) > 0.05 || Math.abs(t.tly - t.ly) > 0.05)
   if (busy) raf = requestAnimationFrame(tick)
-  else { raf = 0; pos.snap(); draw() }
+  else { raf = 0; draw() }
 }
+function startGlide(to) {
+  glide.x = state.p
+  glide.v = state.gliding ? glide.v : 0
+  glide.to = clamp(to, 0, N - 1)
+  state.gliding = true
+  kick()
+}
+addEventListener('scroll', () => {
+  if (state.view !== 'dial') return
+  if (!state.gliding) {
+    if (state.scrollFrom == null) state.scrollFrom = clamp(scrollY / stepPx, 0, N - 1)
+    state.lastScroll = performance.now()
+  }
+  kick()
+}, { passive: true })
+// a new gesture takes over from a glide
+const takeOver = () => { if (state.gliding) { state.gliding = false; state.scrollFrom = state.p } }
+addEventListener('wheel', takeOver, { passive: true })
+addEventListener('touchstart', () => { takeOver(); state.touching = true }, { passive: true })
+addEventListener('touchend', () => { state.touching = false; state.lastScroll = performance.now(); kick() }, { passive: true })
+addEventListener('touchcancel', () => { state.touching = false; kick() }, { passive: true })
 
-// ---------- when the dial comes to rest: caption, video, address (§6.5, §6.6) ----------
+// ---------- when the scroll comes to rest on an item: caption, video, address ----------
 
 let settleTimer = 0
 let nextTimer = 0
@@ -394,13 +433,12 @@ function onSettle() {
   clearTimeout(settleTimer)
   clearTimeout(nextTimer)
   settleTimer = setTimeout(() => {
-    const i = clamp(Math.round(pos.x), 0, N - 1)
+    const i = clamp(Math.round(state.p), 0, N - 1)
     setActive(i)
     caption.classList.add('shown')
     syncVideos()
     nextTimer = setTimeout(() => {
-      const n = pairs[i + 1]
-      if (n) for (const s of [n.pc.screen, n.phone.screen]) if (s) loadVideo(s)
+      for (const n of [pairs[i + 1], pairs[i - 1]]) if (n) for (const s of [n.pc.screen, n.phone.screen]) if (s) loadVideo(s)
     }, 600)
   }, 120)
 }
@@ -422,16 +460,29 @@ function fillCaption() {
   const app = APPS[i]
   const t = STRINGS[state.lang]
   $('desc').textContent = app.desc[state.lang]
-  const code = $('code')
-  code.hidden = !app.repo
-  if (app.repo) code.href = app.repo
-  code.setAttribute('aria-label', t.code)
+  const open = $('open')
+  open.href = app.url
+  open.setAttribute('aria-label', t.open(app.name))
+  open.dataset.tip = t.openShort
   const why = app.why[state.lang] || ''
   closeWhy()
-  $('why').textContent = why
-  $('why').hidden = !why || geo.whyLines === 0
+  whyEl.textContent = why
+  whyEl.hidden = !why || geo.whyLines === 0
   placeCaption()
   requestAnimationFrame(markLongWhy)
+}
+
+/** On a phone the reason goes right under the description, as many lines as fit beside the phone. */
+function placeCaption() {
+  if (!geo || geo.wide) return
+  const name = pairs[Math.max(0, state.active)]?.name
+  const nameH = name ? name.getBoundingClientRect().height || geo.ns : geo.ns
+  const dT = geo.rowTop + 24 + nameH + 12
+  stage.style.setProperty('--dT', `${dT}px`)
+  const descH = $('desc').parentElement.getBoundingClientRect().height || 21
+  const wT = dT + descH + 16
+  stage.style.setProperty('--wT', `${wT}px`)
+  stage.style.setProperty('--whyLines', String(Math.max(0, Math.floor((geo.phBottom - wT) / (12 * 1.85)))))
 }
 
 // ---------- the reason: only the first lines fit; a tap opens the whole text in place ----------
@@ -447,8 +498,7 @@ function openWhy() {
   if (!whyEl.classList.contains('more') || whyEl.classList.contains('open')) return
   const b = whyEl.getBoundingClientRect()
   const H = stage.clientHeight
-  // grow upwards from where the short version sits, so nothing below it moves
-  // (the open card has 18px / 22px of padding offset by negative margins, so its text stays put)
+  // grows upwards from where the short version sits; padding is offset by negative margins so the text stays put
   whyEl.style.top = 'auto'
   whyEl.style.bottom = `${Math.max(8, H - b.bottom)}px`
   if (!geo.wide) {
@@ -472,18 +522,7 @@ whyEl.addEventListener('keydown', (e) => {
 document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.why')) closeWhy() })
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWhy() })
 
-/** On a phone the reason goes right under the description, as many lines as fit beside the phone (§2.3). */
-function placeCaption() {
-  if (!geo || geo.wide) return
-  const name = pairs[Math.max(0, state.active)]?.name
-  const nameH = name ? name.getBoundingClientRect().height || geo.ns : geo.ns
-  const dT = geo.rowTop + 24 + nameH + 12
-  stage.style.setProperty('--dT', `${dT}px`)
-  const descH = $('desc').getBoundingClientRect().height || 21
-  const wT = dT + descH + 16
-  stage.style.setProperty('--wT', `${wT}px`)
-  stage.style.setProperty('--whyLines', String(Math.max(0, Math.floor((geo.phBottom - wT) / (12 * 1.85)))))
-}
+// ---------- video ----------
 
 function syncVideos() {
   for (const p of pairs) {
@@ -503,14 +542,15 @@ function syncVideos() {
     }
     p.playing = active && !state.userPaused
   }
-  for (const p of pairs) for (const s of [p.pc.screen, p.phone.screen]) if (s) s.screen.setAttribute('aria-label', state.userPaused ? STRINGS[state.lang].play : STRINGS[state.lang].pause)
+  const label = state.userPaused ? STRINGS[state.lang].play : STRINGS[state.lang].pause
+  for (const p of pairs) for (const s of [p.pc.screen, p.phone.screen]) if (s) s.screen.setAttribute('aria-label', label)
 }
 function togglePause() {
   state.userPaused = !state.userPaused
   for (const p of pairs) p.playing = false
   syncVideos()
 }
-// screens leave as soon as they are half way out (§6.6)
+// screens stop as soon as they are half way out
 function leaveCheck() {
   for (const p of pairs) {
     if (!p.playing || Math.abs(p.i - ps.x) <= 0.5) continue
@@ -525,109 +565,41 @@ function leaveCheck() {
   }
 }
 
-// ---------- input (§6.2, §6.3) ----------
+// ---------- moving to an item: the page scrolls there ----------
 
-function goTo(i) {
-  pos.set(...SETTLE)
-  pos.to = clamp(i, 0, N - 1)
-  state.wheel = null
-  kick()
-}
-const stepBy = (n) => goTo(Math.round(pos.to) + n)
-
-const drag = { id: null, start: 0, p0: 0, moved: false, per: 98, samples: [], suppress: false }
-stage.addEventListener('pointerdown', (e) => {
-  if (state.view !== 'dial' || (e.pointerType === 'mouse' && e.button !== 0)) return
-  drag.suppress = false
-  if (e.target.closest('a, .lang, .lang-menu, .why')) return
-  const onDial = !!e.target.closest('.wheel, .tile')
-  drag.id = e.pointerId
-  drag.per = onDial ? geo.spacing : 220
-  drag.start = geo.wide ? e.clientY : e.clientX
-  drag.p0 = pos.x
-  drag.moved = false
-  drag.samples = [[e.timeStamp, drag.start]]
-})
-stage.addEventListener('pointermove', (e) => {
-  if (e.pointerId !== drag.id) return
-  const at = geo.wide ? e.clientY : e.clientX
-  if (!drag.moved) {
-    if (Math.abs(at - drag.start) < 6) return
-    drag.moved = true
-    state.dragging = true
-    state.wheel = null
-    stage.setPointerCapture(e.pointerId)
-    drag.start = at
-    drag.p0 = pos.x
-  }
-  pos.x = drag.p0 - (at - drag.start) / drag.per
-  drag.samples.push([e.timeStamp, at])
-  while (drag.samples.length > 2 && e.timeStamp - drag.samples[0][0] > 80) drag.samples.shift()
-  const [t0, x0] = drag.samples[0]
-  pos.v = e.timeStamp > t0 ? clamp((-(at - x0) / (e.timeStamp - t0)) * 1000 / drag.per, -14, 14) : 0
-  kick()
-})
-function endDrag(e) {
-  if (e.pointerId !== drag.id) return
-  drag.id = null
-  if (!drag.moved) return
-  drag.suppress = true
-  state.dragging = false
-  const from = Math.round(drag.p0)
-  pos.set(...SETTLE)
-  pos.to = clamp(Math.round(pos.x + pos.v * 0.18), Math.max(0, from - 3), Math.min(N - 1, from + 3))
-  kick()
-}
-stage.addEventListener('pointerup', endDrag)
-stage.addEventListener('pointercancel', endDrag)
-
-stage.addEventListener('wheel', (e) => {
-  if (state.view !== 'dial' || e.ctrlKey) return
-  const both = !geo.wide
-  const raw = both && Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-  if (!raw) return
-  e.preventDefault()
-  const notched = e.deltaMode === 1 || Math.abs(raw) >= 50
-  if (notched) {
-    if (e.timeStamp - state.lastNotch < 90) return
-    state.lastNotch = e.timeStamp
-    stepBy(Math.sign(raw))
+function goTo(i, instant = false) {
+  if (instant || reduced) {
+    state.gliding = false
+    scrollTo(0, Math.round(clamp(i, 0, N - 1) * stepPx))
+    kick()
     return
   }
-  if (!state.wheel) state.wheel = { from: pos.x, to: pos.x, timer: 0 }
-  const w = state.wheel
-  w.to = clamp(w.to + raw / 160, 0, N - 1)
-  pos.set(...WHEEL)
-  pos.to = w.to
-  clearTimeout(w.timer)
-  w.timer = setTimeout(() => {
-    if (state.wheel !== w) return
-    const moved = w.to - w.from
-    state.wheel = null
-    pos.set(...SETTLE)
-    pos.to = clamp(Math.abs(moved) >= 0.15 ? (moved > 0 ? Math.ceil(pos.x - 1e-3) : Math.floor(pos.x + 1e-3)) : Math.round(pos.x), 0, N - 1)
-    kick()
-  }, 130)
-  kick()
-}, { passive: false })
-
+  startGlide(i)
+}
 document.addEventListener('keydown', (e) => {
   if (state.view !== 'dial' || e.altKey || e.metaKey || e.ctrlKey) return
-  if (e.target.closest?.('input, textarea, select, .lang-menu')) return
-  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') stepBy(1)
-  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') stepBy(-1)
+  if (e.target.closest?.('input, textarea, select, .lang-menu, .why')) return
+  const here = state.gliding ? glide.to : Math.round(state.p)
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') goTo(here + 1)
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(here - 1)
   else if (e.key === 'Home') goTo(0)
   else if (e.key === 'End') goTo(N - 1)
   else return
   e.preventDefault()
 })
 
-// ---------- the wall (§7.1) ----------
+// ---------- the wall ----------
 
 const wall = $('wall')
 let wallItems = null
 let wallIO = null
 const wallVisible = new Set()
+
+function openLink() {
+  const a = $('open').cloneNode(true)
+  a.removeAttribute('id')
+  return a
+}
 
 function buildWall() {
   wallItems = APPS.map((app, i) => {
@@ -649,22 +621,19 @@ function buildWall() {
     name.className = 'name'
     const nameText = document.createElement('span')
     nameText.textContent = app.name
-    name.append(nameText)
-    const code = $('code').cloneNode(true)
-    code.removeAttribute('id')
-    code.hidden = !app.repo
-    if (app.repo) code.href = app.repo
-    name.append(code)
+    const open = openLink()
+    open.href = app.url
+    name.append(nameText, open)
     const desc = document.createElement('p')
     desc.className = 'w-desc'
     const why = document.createElement('p')
     why.className = 'w-why'
     item.append(pairEl, meta, name, desc, why)
     item.addEventListener('click', (e) => { if (!e.target.closest('a')) setView('dial', i) })
+    const w = { app, i, item, pc, phone, desc, why, open, hover: false }
     item.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { w.hover = true; wallPlay() } })
     item.addEventListener('pointerleave', () => { w.hover = false; wallPlay() })
     wall.append(item)
-    const w = { app, i, item, pc, phone, desc, why, code, hover: false }
     return w
   })
   wallIO = new IntersectionObserver((entries) => {
@@ -686,9 +655,9 @@ function fillWall() {
     w.desc.textContent = w.app.desc[state.lang]
     w.why.textContent = w.app.why[state.lang] || ''
     w.why.hidden = !w.why.textContent
-    w.code.setAttribute('aria-label', t.code)
+    w.open.setAttribute('aria-label', t.open(w.app.name))
+    w.open.dataset.tip = t.openShort
     w.pc.url.querySelector('.url-text').textContent = shownUrl(w.app.url, true)
-    w.pc.url.setAttribute('aria-label', t.open(w.app.name))
   }
 }
 function layoutWall() {
@@ -716,39 +685,42 @@ function wallPlay() {
   }
 }
 
-// ---------- switching views (§7.1) ----------
+// ---------- switching views ----------
 
 function setView(view, focus, instant = false) {
   if (view === state.view) return
-  const from = state.view
   const apply = () => {
     state.view = view
     document.body.dataset.view = view
+    document.documentElement.dataset.view = view
     wall.hidden = view !== 'wall'
-    $('view-btn').setAttribute('aria-label', view === 'dial' ? STRINGS[state.lang].toWall : STRINGS[state.lang].toDial)
+    const t = STRINGS[state.lang]
+    const vb = $('view-btn')
+    vb.setAttribute('aria-label', view === 'dial' ? t.toWall : t.toDial)
+    vb.dataset.tip = view === 'dial' ? t.toWall : t.toDial
+    hideTileTip()
     if (view === 'wall') {
       if (!wallItems) buildWall()
       layoutWall()
       for (const p of pairs) for (const s of [p.pc.screen, p.phone.screen]) if (s?.video && !s.video.paused) s.video.pause()
-      const w = wallItems[Math.max(0, state.active)]
-      w.item.scrollIntoView({ block: 'center' })
+      wallItems[Math.max(0, state.active)].item.scrollIntoView({ block: 'center' })
       requestAnimationFrame(wallPlay)
     } else {
-      scrollTo(0, 0)
-      if (focus != null) { pos.to = pos.x = ps.x = ps.to = pp.x = pp.to = focus; pos.v = 0 }
       for (const w of wallItems || []) for (const s of [w.pc.screen, w.phone.screen]) if (s?.video && !s.video.paused) s.video.pause()
       measure()
+      const i = focus ?? Math.max(0, state.active)
+      state.p = ps.x = ps.to = pp.x = pp.to = i
+      goTo(i, true)
       draw()
       state.settledAt = 0
       for (const p of pairs) p.playing = false
       kick()
     }
-    nameTransition(view, focus)
+    nameTransition(view, focus ?? state.active)
   }
   store.set('view', view)
-  const i = focus ?? state.active
   if (document.startViewTransition && !reduced && !instant) {
-    nameTransition(from, i)
+    nameTransition(state.view, focus ?? state.active)
     document.startViewTransition(apply)
   } else apply()
 }
@@ -760,9 +732,9 @@ function nameTransition(view, i) {
   if (view === 'dial') { pairs[i].pc.el.style.viewTransitionName = 'sel-pc'; pairs[i].phone.el.style.viewTransitionName = 'sel-phone' }
   else if (wallItems) { wallItems[i].pc.el.style.viewTransitionName = 'sel-pc'; wallItems[i].phone.el.style.viewTransitionName = 'sel-phone' }
 }
-$('view-btn').addEventListener('click', () => setView(state.view === 'dial' ? 'wall' : 'dial', state.view === 'wall' ? Math.max(0, state.active) : undefined))
+$('view-btn').addEventListener('click', () => setView(state.view === 'dial' ? 'wall' : 'dial'))
 
-// ---------- language (§4.3) ----------
+// ---------- language ----------
 
 const langMenu = $('lang-menu')
 const langBtn = $('lang-btn')
@@ -776,8 +748,8 @@ const langItems = LANGS.map((l) => {
   langMenu.append(b)
   return b
 })
-function openLang() { langMenu.hidden = false; langBtn.setAttribute('aria-expanded', 'true'); langItems.find((b) => b.getAttribute('aria-checked') === 'true')?.focus() }
-function closeLang() { langMenu.hidden = true; langBtn.setAttribute('aria-expanded', 'false') }
+function openLang() { langMenu.hidden = false; langBtn.setAttribute('aria-expanded', 'true'); langBtn.classList.add('menu-open'); langItems.find((b) => b.getAttribute('aria-checked') === 'true')?.focus() }
+function closeLang() { langMenu.hidden = true; langBtn.setAttribute('aria-expanded', 'false'); langBtn.classList.remove('menu-open') }
 langBtn.addEventListener('click', () => (langMenu.hidden ? openLang() : closeLang()))
 document.addEventListener('pointerdown', (e) => { if (!langMenu.hidden && !e.target.closest('.lang')) closeLang() })
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !langMenu.hidden) { closeLang(); langBtn.focus() } })
@@ -786,17 +758,17 @@ function setLang(code, chosen = false) {
   state.lang = code
   const t = STRINGS[code]
   document.documentElement.lang = code
-  $('lang-code').textContent = LANGS.find((l) => l.code === code).label
   langBtn.setAttribute('aria-label', t.language)
+  langBtn.dataset.tip = t.language
   langMenu.setAttribute('aria-label', t.language)
   langItems.forEach((b, k) => b.setAttribute('aria-checked', String(LANGS[k].code === code)))
-  $('view-btn').setAttribute('aria-label', state.view === 'dial' ? t.toWall : t.toDial)
+  const vb = $('view-btn')
+  vb.setAttribute('aria-label', state.view === 'dial' ? t.toWall : t.toDial)
+  vb.dataset.tip = state.view === 'dial' ? t.toWall : t.toDial
   slotsEl.setAttribute('aria-label', t.dial)
   slots.forEach((s, i) => s.tile.setAttribute('aria-label', APPS[i].name))
   for (const p of pairs) {
-    const u = p.pc.url
-    u.querySelector('.url-text').textContent = shownUrl(p.app.url, geo && !geo.wide)
-    u.setAttribute('aria-label', t.open(p.app.name))
+    p.pc.url.querySelector('.url-text').textContent = shownUrl(p.app.url, geo && !geo.wide)
     if (p.app.phone === 'missing') p.phone.el.setAttribute('aria-label', t.phoneMissing)
   }
   fillCaption()
@@ -825,12 +797,13 @@ addEventListener('resize', () => {
   resizeQueued = true
   requestAnimationFrame(() => {
     resizeQueued = false
+    const keep = Math.round(state.p)
     measure()
     setLang(state.lang)
-    if (state.view === 'dial') draw()
-    else { layoutWall(); wallPlay() }
+    if (state.view === 'dial') { goTo(keep, true); state.p = keep; draw() } else { layoutWall(); wallPlay() }
   })
 })
+
 document.body.classList.toggle('reduced', reduced)
 measure()
 setLang(state.lang)
@@ -839,14 +812,15 @@ document.fonts?.load('400 32px "Young Serif"').then(() => { fitNames(); placeCap
 const firstView = state.view
 state.view = 'dial'
 document.body.dataset.view = 'dial'
+document.documentElement.dataset.view = 'dial'
 if (firstView === 'wall') {
   state.active = startIndex
   setView('wall', undefined, true)
 } else {
+  goTo(startIndex, true)
+  state.p = startIndex
   if (!reduced) {
-    // the dial rolls in from just before the first item; the screens rise into place (§6.7)
-    pos.x = ps.x = pp.x = startIndex - 1.2
-    pos.to = startIndex
+    // the screens rise into place once
     introPc.x = introPh.x = 0
     introPc.to = introPh.to = 1
     introDelay = 0.07

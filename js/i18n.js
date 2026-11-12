@@ -8,6 +8,7 @@ export const LANGS = [
 
 export const STRINGS = {
   ja: {
+    openShort: '開く',
     open: (name) => `${name} を開く`,
     code: 'ソースコード',
     language: '言語',
@@ -19,6 +20,7 @@ export const STRINGS = {
     pause: '一時停止',
   },
   en: {
+    openShort: 'Open',
     open: (name) => `Open ${name}`,
     code: 'Source code',
     language: 'Language',
@@ -30,6 +32,7 @@ export const STRINGS = {
     pause: 'Pause',
   },
   es: {
+    openShort: 'Abrir',
     open: (name) => `Abrir ${name}`,
     code: 'Código fuente',
     language: 'Idioma',
@@ -41,6 +44,7 @@ export const STRINGS = {
     pause: 'Pausar',
   },
   ko: {
+    openShort: '열기',
     open: (name) => `${name} 열기`,
     code: '소스 코드',
     language: '언어',

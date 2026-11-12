@@ -124,10 +124,10 @@ export const APPS = [
     phone: 'still',
     year: 2023,
     desc: {
-      ja: '線香が1本立っているページ',
-      en: 'A page with one incense stick',
-      es: 'Una página con una varilla de incienso',
-      ko: '향 한 대가 서 있는 페이지',
+      ja: 'ブラウザでお線香を供えるページ',
+      en: 'A page for offering incense in your browser',
+      es: 'Una página para ofrecer incienso en el navegador',
+      ko: '브라우저에서 향을 올리는 페이지',
     },
     why: {
       ja: "祖母が亡くなった際、お通夜の一晩中火を灯す線香について調べた。先に亡くなっていた祖父が、生前に(認知症のような症状の中)、火事を恐れて線香立ての灰をすべて捨ててから、自宅で線香をあげることはなかった。そこに灰を再設置して線香をあげるのも、故人の意図するところではないだろうなと思われた…。\nインターネットはいつでもONであって欲しい。ずっと点いてる線香が欲しかった。",
