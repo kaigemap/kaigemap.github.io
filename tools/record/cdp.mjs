@@ -24,20 +24,20 @@ const CURSOR_SCRIPT = `(() => {
     const svg = document.createElementNS(NS, 'svg')
     svg.id = '__rec_cursor'
     svg.setAttribute('viewBox', '0 0 24 24')
-    svg.setAttribute('width', '26'); svg.setAttribute('height', '26')
-    svg.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;transform:translate(-100px,-100px);filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35));'
+    svg.setAttribute('width', '20'); svg.setAttribute('height', '20')
+    svg.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;transform:translate(-100px,-100px);filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));'
     const p = document.createElementNS(NS, 'path')
     p.setAttribute('d', 'M4 2.5 L4 19.5 L8.6 15.3 L11.6 22 L14.6 20.7 L11.7 14.1 L18 14.1 Z')
-    p.setAttribute('fill', '#111'); p.setAttribute('stroke', '#fff'); p.setAttribute('stroke-width', '1.4'); p.setAttribute('stroke-linejoin', 'round')
+    p.setAttribute('fill', '#111'); p.setAttribute('stroke', '#fff'); p.setAttribute('stroke-width', '1.25'); p.setAttribute('stroke-linejoin', 'round')
     svg.append(p)
     document.body.append(svg)
-    window.addEventListener('mousemove', (e) => { svg.style.transform = 'translate(' + (e.clientX - 4) + 'px,' + (e.clientY - 2) + 'px)' }, true)
+    window.addEventListener('mousemove', (e) => { svg.style.transform = 'translate(' + (e.clientX - 4) + 'px,' + (e.clientY - 2.5) + 'px)' }, true)
     window.addEventListener('mousedown', (e) => {
       const r = document.createElement('div')
-      r.style.cssText = 'position:fixed;z-index:2147483646;pointer-events:none;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(80,140,255,.35);left:' + e.clientX + 'px;top:' + e.clientY + 'px;transform:scale(.3);opacity:1;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s ease-out'
+      r.style.cssText = 'position:fixed;z-index:2147483646;pointer-events:none;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:1.5px solid rgba(28,27,24,.3);left:' + e.clientX + 'px;top:' + e.clientY + 'px;transform:scale(.636);opacity:1;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .35s ease-out'
       document.body.append(r)
-      requestAnimationFrame(() => requestAnimationFrame(() => { r.style.transform = 'scale(1.4)'; r.style.opacity = '0' }))
-      setTimeout(() => r.remove(), 600)
+      requestAnimationFrame(() => requestAnimationFrame(() => { r.style.transform = 'scale(1)'; r.style.opacity = '0' }))
+      setTimeout(() => r.remove(), 450)
     }, true)
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount()
@@ -49,10 +49,10 @@ const TOUCH_SCRIPT = `(() => {
     if (document.getElementById('__rec_touch') || !document.body) return
     const d = document.createElement('div')
     d.id = '__rec_touch'
-    d.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(40,40,46,.28);border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 10px rgba(0,0,0,.25);opacity:0;transform:translate(-100px,-100px) scale(.6);transition:opacity .18s ease-out'
+    d.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:rgba(20,20,20,.18);border:1.5px solid rgba(255,255,255,.8);box-shadow:0 1px 6px rgba(0,0,0,.18);opacity:0;transform:translate(-100px,-100px) scale(1);transition:opacity .18s ease-out'
     document.body.append(d)
     let x = -100, y = -100, down = false
-    const place = () => { d.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + (down ? 1 : 0.6) + ')' }
+    const place = () => { d.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + (down ? 0.85 : 1) + ')'; d.style.background = down ? 'rgba(20,20,20,.3)' : 'rgba(20,20,20,.18)' }
     const at = (e) => { const t = e.touches && e.touches[0]; if (t) { x = t.clientX; y = t.clientY } }
     window.addEventListener('touchstart', (e) => { at(e); down = true; d.style.transition = 'opacity .12s ease-out, transform .12s ease-out'; place(); d.style.opacity = '1' }, { capture: true, passive: true })
     window.addEventListener('touchmove', (e) => { at(e); d.style.transition = 'opacity .12s ease-out'; place() }, { capture: true, passive: true })
@@ -151,7 +151,7 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
       if (touch && !buttons) { mouse = { x: p.x, y: p.y }; await sleep(Math.min(ms, 400)); return }
       const from = { ...mouse }
       const steps = Math.max(2, Math.round(ms / 16))
-      const bend = (Math.hypot(p.x - from.x, p.y - from.y)) * 0.08
+      const bend = (Math.hypot(p.x - from.x, p.y - from.y)) * 0.04
       for (let i = 1; i <= steps; i++) {
         const t = i / steps
         const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -162,7 +162,7 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
       }
       mouse = { x: p.x, y: p.y }
     },
-    async click(target, { ms = 650, pause = 120 } = {}) {
+    async click(target, { ms = 700, pause = 150 } = {}) {
       if (touch) return s.tap(target, { ms })
       await s.moveTo(target, ms)
       await sleep(pause)
@@ -237,17 +237,33 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
         await sleep(16)
       }
     },
+    /** Answer requests whose URL starts with a prefix from local files: { 'https://example.com/a.png': '/abs/a.png' }. */
+    async intercept(map) {
+      await send('Fetch.enable', { patterns: Object.keys(map).map((u) => ({ urlPattern: u.replace(/[?]/g, '\\?') + '*' })) })
+      on('Fetch.requestPaused', async (p) => {
+        const hit = Object.keys(map).find((u) => p.request.url.startsWith(u))
+        if (!hit) return send('Fetch.continueRequest', { requestId: p.requestId }).catch(() => {})
+        const body = readFileSync(map[hit]).toString('base64')
+        const type = map[hit].endsWith('.png') ? 'image/png' : map[hit].endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream'
+        send('Fetch.fulfillRequest', { requestId: p.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: type }, { name: 'Access-Control-Allow-Origin', value: '*' }], body }).catch(() => {})
+      })
+    },
     async startRecording() {
       frames = []
       on('Page.screencastFrame', async (p) => {
         if (frames) frames.push({ data: p.data, ts: p.metadata.timestamp })
         send('Page.screencastFrameAck', { sessionId: p.sessionId }).catch(() => {})
       })
-      await send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: width * scale, maxHeight: height * scale, everyNthFrame: 1 })
+      const cap = s.captureWidth ?? width * scale
+      await send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: cap, maxHeight: Math.round(cap * height / width), everyNthFrame: 1 })
       s.recordStart = Date.now() / 1000
     },
-    /** Writes <out>.mp4 and <out>.jpg. poster: seconds into the clip for the poster frame. */
-    async stopRecording(out, { poster = 0.5, fps = 30, outWidth = 1280, crf = 26 } = {}) {
+    /**
+     * Writes one mp4 + jpg per output: outputs = [{ suffix: '', width: 1600, crf: 26 }, ...].
+     * loop: crossfade the last `loop` seconds into the start so the clip loops without a jump.
+     * The poster is the first frame of the finished clip, so the video starts on the same picture.
+     */
+    async stopRecording(out, { outputs = [{ suffix: '', width: 1280, crf: 26 }], loop = 0.4, fps = 30 } = {}) {
       const end = Date.now() / 1000
       await send('Page.stopScreencast')
       const list = frames
@@ -261,17 +277,26 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
         const next = i + 1 < list.length ? list[i + 1].ts : end
         concat += `file '${file}'\nduration ${Math.max(0.001, next - f.ts).toFixed(4)}\n`
       })
-      // concat demuxer quirk: repeat the last file so its duration counts
       concat += `file '${join(dir, `${String(list.length - 1).padStart(5, '0')}.jpg`)}'\n`
       writeFileSync(join(dir, 'list.txt'), concat)
       mkdirSync(dirname(out), { recursive: true })
-      const total = end - list[0].ts
+      // 1) a near-lossless master at constant frame rate
+      const master = join(dir, 'master.mp4')
       execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(dir, 'list.txt'),
-        '-vf', `fps=${fps},scale=${outWidth}:-2:flags=lanczos,format=yuv420p`,
-        '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-profile:v', 'high', '-tune', 'animation',
-        '-movflags', '+faststart', '-an', `${out}.mp4`])
-      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', (total * poster).toFixed(2), '-i', `${out}.mp4`,
-        '-frames:v', '1', '-q:v', '4', `${out}.jpg`])
+        '-vf', `fps=${fps},scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p`, '-c:v', 'libx264', '-crf', '10', '-preset', 'veryfast', master])
+      const total = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', master]).toString().trim())
+      // 2) each output: loop seam + scale + encode, then its poster
+      for (const o of outputs) {
+        const file = `${out}${o.suffix}.mp4`
+        const scaleF = `scale=${o.width}:-2:flags=lanczos`
+        const graph = loop > 0 && total > loop * 3
+          ? `[0]split[a][b];[a]trim=start=${loop},setpts=PTS-STARTPTS[m];[b]trim=end=${loop},setpts=PTS-STARTPTS[h];[m][h]xfade=transition=fade:duration=${loop}:offset=${(total - 2 * loop).toFixed(3)},${scaleF},format=yuv420p[v]`
+          : `[0]${scaleF},format=yuv420p[v]`
+        execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', master, '-filter_complex', graph, '-map', '[v]',
+          '-c:v', 'libx264', '-preset', 'slow', '-crf', String(o.crf ?? 26), '-profile:v', 'high', '-tune', 'animation',
+          '-maxrate', '1500k', '-bufsize', '3000k', '-r', String(fps), '-movflags', '+faststart', '-an', file])
+        execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', file, '-frames:v', '1', '-q:v', '4', `${out}${o.suffix}.jpg`])
+      }
       rmSync(dir, { recursive: true, force: true })
       return { frames: list.length, seconds: total }
     },

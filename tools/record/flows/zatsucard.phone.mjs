@@ -1,17 +1,21 @@
-import { fileURLToPath } from 'node:url'
-const fx = (n) => fileURLToPath(new URL('../fixtures/' + n, import.meta.url))
+import { fx, setValue } from './_fx.mjs'
 export const url = 'https://kaigemap.github.io/zatsucard/'
-export const poster = 0.7
-export const prepare = (s) => s.eval(`(() => { const e = document.querySelector('[class*=preview-grid], #cardGrid, #previewGrid, .card-grid, .cards'); if (e) e.dataset.rec = 'cards' })()`)
-export default async (s) => {
-  await s.sleep(500)
-  await s.tap('#csvInput', { ms: 600 })
-  await s.sleep(300)
+export const prepare = async (s) => {
   await s.files('#csvInput', [fx('cards.csv')])
   await s.sleep(1200)
-  const y = await s.eval(`(() => { const all = [...document.querySelectorAll('canvas, img')].filter(e => e.getBoundingClientRect().width > 100); const e = all[0]; return e ? e.getBoundingClientRect().top + scrollY : 1200 })()`)
-  await s.scrollBy(Math.max(300, y - 140), 560)
-  await s.sleep(1600)
-  await s.scrollBy(520)
-  await s.sleep(1600)
+  await setValue(s, '#borderColor', '#1d2740')
+  await setValue(s, '#bgColor', '#f1ebdd')
+  await setValue(s, '#titleColor', '#e2512b')
+  await setValue(s, '#textColor', '#1d2740')
+  await s.sleep(600)
+  const y = await s.eval(`(() => { const e = [...document.querySelectorAll('canvas, img')].find(e => e.getBoundingClientRect().width > 100); return e ? e.getBoundingClientRect().top + scrollY - 90 : 900 })()`)
+  await s.eval(`scrollTo(0, 0)`)
+  s.cardsY = y
+}
+export default async (s) => {
+  await s.sleep(800)
+  await s.scrollBy(Math.round(s.cardsY), 420)
+  await s.sleep(2200)
+  await s.scrollBy(-Math.round(s.cardsY), 420)
+  await s.sleep(900)
 }

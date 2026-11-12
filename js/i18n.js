@@ -1,3 +1,4 @@
+// Words that only screen readers hear (aria-label), plus the language menu. The visible UI has almost no text.
 export const LANGS = [
   { code: 'ja', label: 'JA', native: '日本語' },
   { code: 'en', label: 'EN', native: 'English' },
@@ -7,64 +8,55 @@ export const LANGS = [
 
 export const STRINGS = {
   ja: {
-    tagline: 'つくった小さな道具',
-    open: '開く',
-    code: 'コード',
-    prev: '前へ',
-    next: '次へ',
-    viewArc: '円弧で見る',
-    viewGrid: '一覧で見る',
+    open: (name) => `${name} を開く`,
+    code: 'ソースコード',
     language: '言語',
+    toWall: '一覧で見る',
+    toDial: 'ダイヤルで見る',
+    dial: '作ったもの',
+    phoneMissing: 'スマホの表示は未対応',
     play: '再生',
     pause: '一時停止',
-    slide: (n, total) => `${total}件中${n}件目`,
   },
   en: {
-    tagline: 'Small tools I made',
-    open: 'Open',
-    code: 'Code',
-    prev: 'Previous',
-    next: 'Next',
-    viewArc: 'Arc view',
-    viewGrid: 'Grid view',
+    open: (name) => `Open ${name}`,
+    code: 'Source code',
     language: 'Language',
+    toWall: 'Show as a list',
+    toDial: 'Show on the dial',
+    dial: 'Things I made',
+    phoneMissing: 'No phone layout yet',
     play: 'Play',
     pause: 'Pause',
-    slide: (n, total) => `${n} of ${total}`,
   },
   es: {
-    tagline: 'Pequeñas herramientas que hice',
-    open: 'Abrir',
-    code: 'Código',
-    prev: 'Anterior',
-    next: 'Siguiente',
-    viewArc: 'Vista en arco',
-    viewGrid: 'Vista en cuadrícula',
+    open: (name) => `Abrir ${name}`,
+    code: 'Código fuente',
     language: 'Idioma',
+    toWall: 'Ver como lista',
+    toDial: 'Ver en el dial',
+    dial: 'Cosas que hice',
+    phoneMissing: 'Todavía sin diseño para móvil',
     play: 'Reproducir',
     pause: 'Pausar',
-    slide: (n, total) => `${n} de ${total}`,
   },
   ko: {
-    tagline: '직접 만든 작은 도구들',
-    open: '열기',
-    code: '코드',
-    prev: '이전',
-    next: '다음',
-    viewArc: '원호로 보기',
-    viewGrid: '목록으로 보기',
+    open: (name) => `${name} 열기`,
+    code: '소스 코드',
     language: '언어',
+    toWall: '목록으로 보기',
+    toDial: '다이얼로 보기',
+    dial: '만든 것들',
+    phoneMissing: '아직 모바일 화면이 없음',
     play: '재생',
     pause: '일시 정지',
-    slide: (n, total) => `${total}개 중 ${n}번째`,
   },
 }
 
-const store = {
+export const store = {
   get(key) { try { return localStorage.getItem(key) } catch { return null } },
   set(key, value) { try { localStorage.setItem(key, value) } catch {} },
 }
-export { store }
 
 /** ?lang= first, then what the visitor chose before, then the browser's languages, then English. */
 export function pickLang() {

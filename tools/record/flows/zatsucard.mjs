@@ -1,24 +1,31 @@
-import { fileURLToPath } from 'node:url'
-const fx = (n) => fileURLToPath(new URL('../fixtures/' + n, import.meta.url))
+import { fx, setValue } from './_fx.mjs'
 export const url = 'https://kaigemap.github.io/zatsucard/'
-export const poster = 0.75
-const setColor = (s, sel, v) => s.eval(`(() => { const e = document.querySelector('${sel}'); e.value = '${v}'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })) })()`)
-export default async (s) => {
-  await s.sleep(500)
-  await s.moveTo('#csvInput', 800)
-  await s.sleep(250)
+export const prepare = async (s) => {
   await s.files('#csvInput', [fx('cards.csv')])
-  await s.sleep(1800)
-  await s.moveTo('#bgColor', 700)
-  await setColor(s, '#bgColor', '#fff3d6')
-  await s.sleep(700)
-  await s.moveTo('#borderColor', 500)
-  await setColor(s, '#borderColor', '#e8590c')
-  await s.sleep(700)
-  await s.moveTo('#titleColor', 500)
-  await setColor(s, '#titleColor', '#c2410c')
-  await s.sleep(800)
-  const t = await s.point('#titleSize')
-  await s.drag({ x: t.x - t.w * 0.05, y: t.y }, { x: t.x + t.w * 0.3, y: t.y }, 900)
-  await s.sleep(1600)
+  await s.sleep(1500)
+  await s.eval(`scrollTo(0, 0)`)
+}
+// recolour the cards in the game's two-colour scheme: navy frame, paper ground, vermilion title
+export default async (s) => {
+  const home = await s.point('#titleSize', { scroll: false })
+  await s.moveTo({ x: home.x, y: home.y + 40 }, 10)
+  await s.sleep(900)
+  await s.moveTo('#borderColor', 800)
+  await s.sleep(150)
+  await setValue(s, '#borderColor', '#1d2740')
+  await s.sleep(900)
+  await s.moveTo('#bgColor', 600)
+  await s.sleep(150)
+  await setValue(s, '#bgColor', '#f1ebdd')
+  await s.sleep(900)
+  await s.moveTo('#titleColor', 600)
+  await s.sleep(150)
+  await setValue(s, '#titleColor', '#e2512b')
+  await s.sleep(900)
+  await s.moveTo('#textColor', 600)
+  await s.sleep(150)
+  await setValue(s, '#textColor', '#1d2740')
+  await s.sleep(1500)
+  await s.moveTo({ x: home.x, y: home.y + 40 }, 800)
+  await s.sleep(900)
 }

@@ -1,16 +1,14 @@
-import { fileURLToPath } from 'node:url'
-const fx = (n) => fileURLToPath(new URL('../fixtures/' + n, import.meta.url))
+import { BOX } from './_fx.mjs'
 export const url = 'https://kaigemap.github.io/hakogazou/'
-export const poster = 0.45
+export const prepare = async (s) => {
+  await s.files('#bulk-upload', BOX)
+  await s.eval(`new Promise((r) => { const t = Date.now(); const f = () => { const toast = [...document.querySelectorAll('body *')].find((e) => e.children.length === 0 && /割り当て/.test(e.textContent) && e.getClientRects().length); if (!toast || Date.now() - t > 9000) r(); else setTimeout(f, 200) }; setTimeout(f, 800) })`)
+  await s.sleep(600)
+}
 export default async (s) => {
-  await s.sleep(500)
-  await s.eval(`(() => { const i = document.querySelector('#bulk-upload'); i.closest('label, .upload-area, .drop-zone, div').dataset.rec = 'bulk' })()`)
-  await s.tap('[data-rec=bulk]', { ms: 600 })
-  await s.sleep(300)
-  await s.files('#bulk-upload', ['front', 'back', 'left', 'right', 'top', 'bottom'].map((f) => fx('box-' + f + '.png')))
-  await s.sleep(3600)
-  await s.scrollBy(380)
-  await s.sleep(1400)
-  await s.scrollBy(-380)
-  await s.sleep(2200)
+  await s.sleep(2400)
+  await s.scrollBy(420)
+  await s.sleep(1500)
+  await s.scrollBy(-420)
+  await s.sleep(2600)
 }
