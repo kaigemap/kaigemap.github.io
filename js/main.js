@@ -262,12 +262,26 @@ function measure() {
   placeCaption()
 }
 
-/** Long names shrink until they fit (§2.2, §2.3). */
+/**
+ * Long names must never run into the phone frame (§2.2, §2.3).
+ * Wide: one line, shrinking down to 40px. Phone: one line down to 24px, then two lines.
+ */
 function fitNames() {
+  const max = geo.titleW
   for (const p of pairs) {
-    p.name.style.fontSize = ''
-    const need = p.name.scrollWidth
-    if (need > geo.titleW) p.name.style.fontSize = `${Math.max(geo.nsMin, Math.floor(geo.ns * geo.titleW / need))}px`
+    const n = p.name
+    let size = geo.ns
+    const set = () => { n.style.fontSize = `${size}px` }
+    n.style.whiteSpace = 'nowrap'
+    set()
+    const floor = geo.wide ? geo.nsMin : 24
+    while (size > floor && n.scrollWidth > max + 0.5) { size -= 1; set() }
+    if (n.scrollWidth <= max + 0.5 || geo.wide) continue
+    // still too long on a phone: let it take two lines, as large as the longest word allows
+    n.style.whiteSpace = 'normal'
+    size = geo.ns - 2
+    set()
+    while (size > 18 && (n.scrollWidth > max + 0.5 || n.getBoundingClientRect().height > size * 2.2)) { size -= 1; set() }
   }
 }
 
@@ -785,7 +799,8 @@ addEventListener('resize', () => {
 document.body.classList.toggle('reduced', reduced)
 measure()
 setLang(state.lang)
-document.fonts?.ready.then(() => { fitNames(); placeCaption() })
+// names are measured again once Young Serif has really loaded (until then a fallback face is measured)
+document.fonts?.load('400 32px "Young Serif"').then(() => { fitNames(); placeCaption() }).catch(() => {})
 const firstView = state.view
 state.view = 'dial'
 document.body.dataset.view = 'dial'

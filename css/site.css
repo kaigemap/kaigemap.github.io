@@ -6,6 +6,13 @@
   font-weight: 400;
   font-display: swap;
 }
+@font-face {
+  font-family: "Roboto Mono";
+  src: url("../fonts/RobotoMono-Regular-ascii.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+20-7E;
+}
 
 :root {
   color-scheme: light dark;
@@ -25,7 +32,7 @@
   --sh-device: 0 1px 1px rgba(var(--shadow-rgb), .05), 0 6px 12px -4px rgba(var(--shadow-rgb), .10), 0 28px 56px -16px rgba(var(--shadow-rgb), .22);
   --win-edge: 0 0 0 1px rgba(28, 27, 24, .10);
   --serif: "Young Serif", "Iowan Old Style", Georgia, serif;
-  --mono: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+  --mono: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans JP", "Noto Sans KR", "Segoe UI", sans-serif;
   --mincho: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "AppleMyungjo", "Batang", "Iowan Old Style", Georgia, serif;
 }
@@ -396,6 +403,8 @@ body.reduced .screen.playing .play-mark { display: none; }
   line-height: 1;
   letter-spacing: -.015em;
   white-space: nowrap;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 .stage[data-shape="tall"] .name { margin-top: 8px; }
 
