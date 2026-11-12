@@ -34,7 +34,7 @@
   --serif: "Young Serif", "Iowan Old Style", Georgia, serif;
   --mono: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans JP", "Noto Sans KR", "Segoe UI", sans-serif;
-  --mincho: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "AppleMyungjo", "Batang", "Iowan Old Style", Georgia, serif;
+  --mincho: "Iowan Old Style", Georgia, "AppleMyungjo", "Batang", serif; /* the reason in en / es / ko; Japanese uses the gothic */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -86,6 +86,8 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 :lang(ko) { word-break: keep-all; }
+/* the reason is set in a serif for the other languages, but Japanese stays in the same gothic as everything else */
+:lang(ja) .why, :lang(ja) .w-why { font-family: var(--sans); letter-spacing: 0; }
 :lang(ja) { line-break: strict; }
 a { color: inherit; }
 button { font: inherit; color: inherit; }
