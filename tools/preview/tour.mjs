@@ -1,4 +1,4 @@
-// node tools/preview/tour.mjs <out-base> [url] [WxH]  -> <out-base>.mp4: wheel and drag the dial, open the wall, come back
+// node tools/preview/tour.mjs <out-base> [url] [WxH]  -> <out-base>.mp4: scroll the page, tap a tile, hover a button, open the wall, come back
 import { launch } from '../record/cdp.mjs'
 const [out, url = 'http://localhost:8123/?lang=ja&view=dial&_=tour#hakogazou', size = '1440x900'] = process.argv.slice(2)
 const [width, height] = size.split('x').map(Number)
@@ -8,9 +8,11 @@ await s.open(url, 300)
 await s.startRecording()
 await s.moveTo({ x: 120, y: height / 2 + 60 }, 10)
 await s.sleep(2600)
-for (let i = 0; i < 3; i++) { await s.wheel({ x: 120, y: height / 2 }, 160, 14); await s.sleep(1700) }
-await s.drag({ x: 110, y: height / 2 + 120 }, { x: 110, y: height / 2 - 200 }, 380)
+for (let i = 0; i < 3; i++) { await s.wheel({ x: width * 0.55, y: height / 2 }, 160, 14); await s.sleep(1700) }
+await s.wheel({ x: width * 0.55, y: height / 2 }, 900, 40)
 await s.sleep(2400)
+await s.moveTo('#open', 700)
+await s.sleep(1200)
 await s.click('.slot:nth-child(2) .tile', { ms: 800 })
 await s.sleep(2600)
 await s.click('#view-btn', { ms: 900 })
