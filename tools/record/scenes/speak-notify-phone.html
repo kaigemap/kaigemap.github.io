@@ -1,0 +1,58 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>speak-notify (speaker plate, for the recording)</title>
+<!-- A metal speaker plate. The holes light up from the centre outwards, once per spoken beat. -->
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: linear-gradient(160deg, #EDEBE6, #CFCCC5 45%, #E4E1DB); display: grid; place-items: center; overflow: hidden; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .words { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; font: 17px/1.6 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .06em; color: #4A4843; min-height: 1.6em; }
+  .words span { opacity: 0; transition: opacity .2s; }
+  .words span.on { opacity: 1; }
+</style>
+<canvas id="c"></canvas>
+<p class="words" id="w"></p>
+<script>
+  const text = '空もよう、終わりました'
+  const w = document.getElementById('w')
+  const spans = [...text].map((ch) => { const s = document.createElement('span'); s.textContent = ch; w.append(s); return s })
+  const c = document.getElementById('c')
+  const ctx = c.getContext('2d')
+  const dpr = devicePixelRatio || 1
+  const W = innerWidth, H = innerHeight
+  c.width = W * dpr; c.height = H * dpr; ctx.scale(dpr, dpr)
+  const cx = W / 2, cy = H * 0.42, R = W * 0.35
+  const holes = []
+  for (let y = cy - R; y <= cy + R; y += 15) for (let x = cx - R; x <= cx + R; x += 15) {
+    const d = Math.hypot(x - cx, y - cy)
+    if (d <= R) holes.push([x, y, d / R])
+  }
+  // beats: one per character, starting at 1.2 s
+  const beats = [...text].map((_, i) => 1200 + i * 330)
+  const t0 = performance.now()
+  function frame(now) {
+    const t = now - t0
+    ctx.clearRect(0, 0, W, H)
+    let glow = 0
+    for (const b of beats) {
+      const k = (t - b) / 400
+      if (k >= 0 && k <= 1) glow = Math.max(glow, 1)
+    }
+    for (const [x, y, r] of holes) {
+      let g = 0
+      for (const b of beats) {
+        const k = (t - b) / 400 // the ring travels from the centre to the rim in 400 ms
+        if (k < 0 || k > 1.2) continue
+        g = Math.max(g, Math.max(0, 1 - Math.abs(r - k) * 4) * 0.8)
+      }
+      ctx.beginPath()
+      ctx.arc(x, y, 3.6, 0, Math.PI * 2)
+      ctx.fillStyle = '#2A2926'
+      ctx.fill()
+      if (g > 0) { ctx.fillStyle = `rgba(227,169,39,${g.toFixed(3)})`; ctx.fill() }
+    }
+    spans.forEach((s, i) => s.classList.toggle('on', t > beats[i] && t < 8200))
+    requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
+</script>

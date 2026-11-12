@@ -45,6 +45,28 @@ const TILES = {
 <div style="position:absolute;left:138px;top:82px;width:12px;height:12px;border-radius:50%;background:radial-gradient(rgba(246,102,57,.9),rgba(246,102,57,0) 70%)"></div>
 <svg width="288" height="288" style="position:absolute;inset:0"><path d="M144 82 C 136 64, 156 52, 146 34 S 150 14, 142 2" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-linecap="round"/></svg>`),
 }
+Object.assign(TILES, {
+  'sticker-sheet-simulator': () => page('#F0DDD8', `<div style="position:absolute;left:50%;top:50%;width:132px;height:176px;transform:translate(-50%,-50%) rotate(-3deg);background:#fff;border-radius:4px;filter:${shadow};padding:14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;place-items:center">
+${['hare', 'ame', 'kaze', 'yuki', 'rai', 'kiri'].map((k) => `<img src="${uri(`sticker-${k}.png`)}" style="width:46px;height:46px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))">`).join('')}</div>`),
+  fuchimoji: () => page('#DDE8E2', `<div class="mi" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);font-size:132px;font-weight:600;line-height:1;color:${C.paper};-webkit-text-stroke:0;text-shadow:${[...Array(24)].map((_, i) => { const a = (i / 24) * Math.PI * 2; return `${(Math.cos(a) * 9).toFixed(1)}px ${(Math.sin(a) * 9).toFixed(1)}px 0 ${C.ink}` }).join(',')},${[...Array(32)].map((_, i) => { const a = (i / 32) * Math.PI * 2; return `${(Math.cos(a) * 15).toFixed(1)}px ${(Math.sin(a) * 15).toFixed(1)}px 0 ${C.paper}` }).join(',')};filter:${shadow}">空</div>`),
+  'sticker-split': () => page('#EDE6C9', [[0, 0, 'hare'], [1, 0, 'ame'], [0, 1, 'kaze'], [1, 1, 'rai']].map(([x, y, k]) => `<div style="position:absolute;left:${74 + x * 76}px;top:${74 + y * 76}px;width:66px;height:66px;background:#fff;border-radius:3px;filter:${shadow};display:grid;place-items:center;transform:rotate(${(x - 0.5) * 3 + (y - 0.5) * 2}deg)"><img src="${uri(`sticker-${k}.png`)}" style="width:54px;height:54px"></div>`).join('')),
+  ocbox: () => page('#D9E2EE', `<div style="position:absolute;left:50%;top:50%;width:132px;height:172px;transform:translate(-50%,-50%) rotate(2deg);background:#FBFAF6;border-radius:6px;filter:${shadow};padding:14px">
+  <div style="display:flex;gap:10px;align-items:center"><div style="width:38px;height:38px;border-radius:50%;background:${C.sage};box-shadow:inset 0 0 0 3px #fff, 0 0 0 1px rgba(0,0,0,.1)"></div><div><div class="mi" style="font-size:12px;font-weight:600;color:${C.ink};white-space:nowrap">辻津満 泡瀬</div><div style="font-size:8px;color:#888;margin-top:2px">放浪者</div></div></div>
+  ${[['SAN', 50], ['HP', 10], ['MP', 10]].map(([k, v], i) => `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:${i ? 6 : 16}px;border-bottom:1px solid #e3e0d8;padding-bottom:4px"><span class="fu" style="font-size:9px;letter-spacing:.12em;color:#888">${k}</span><span class="fu" style="font-size:16px;font-weight:700;color:${C.ink}">${v}</span></div>`).join('')}
+</div>`),
+  'oshinagaki-generator': () => page('#F0E2D2', `<div style="position:absolute;left:50%;top:50%;width:150px;height:118px;transform:translate(-50%,-50%) rotate(-4deg);background:#fff;border-radius:6px;filter:${shadow};overflow:hidden">
+  <div style="height:26px;background:${C.red};color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;letter-spacing:.1em">ゲームマーケット</div>
+  <div style="display:flex;gap:10px;padding:12px;align-items:center"><img src="${uri('box-front.png')}" style="width:52px;height:52px;border-radius:2px;box-shadow:0 2px 4px rgba(0,0,0,.2)"><div><div class="mi" style="font-size:14px;font-weight:600;color:${C.ink}">空もよう</div><div class="fu" style="font-size:20px;font-weight:700;color:${C.red};margin-top:2px">¥2,500</div></div></div>
+</div>`),
+  'claude-skill-decision-board': () => page('#E4E1DA', `<div style="position:absolute;left:50%;top:50%;width:156px;transform:translate(-50%,-50%);background:#FBFAF6;border-radius:8px;filter:${shadow};padding:14px">
+  <div style="font-size:10px;font-weight:700;color:${C.ink};line-height:1.4">箱の帯の色はどちらにしますか</div>
+  <div style="display:flex;gap:8px;margin-top:10px">${[[C.ink, '紺', true], [C.red, '朱', false]].map(([c, t, on]) => `<div style="flex:1;border-radius:6px;padding:6px;background:#fff;box-shadow:${on ? `0 0 0 2px ${C.ink}` : '0 0 0 1px #ddd'}"><div style="height:34px;border-radius:3px;background:linear-gradient(90deg, ${c} 34%, ${C.paper} 34%)"></div><div style="font-size:9px;font-weight:700;margin-top:5px;color:${C.ink};display:flex;gap:4px;align-items:center"><span style="width:8px;height:8px;border-radius:50%;box-shadow:inset 0 0 0 ${on ? 3 : 1}px ${C.ink}"></span>${t}</div></div>`).join('')}</div>
+</div>`),
+  'claude-skill-speak-notify': () => page('#E0E4DD', `<div style="position:absolute;left:50%;top:50%;width:132px;height:132px;transform:translate(-50%,-50%);border-radius:30px;padding:1.5px;background:linear-gradient(145deg,#F6F4EF,#B4B0A7 28%,#ECE9E2 52%,#8F8B83 100%);filter:${shadow}">
+  <div style="width:100%;height:100%;border-radius:28.5px;background:linear-gradient(160deg,#EDEBE6,#CFCCC5 45%,#E4E1DB);display:grid;place-items:center">
+  <div style="width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,#2A2926 2.2px,transparent 2.6px) 0 0/9px 9px;-webkit-mask:radial-gradient(circle,#000 64%,transparent 66%)"></div></div>
+</div>`),
+})
 
 const wanted = process.argv.slice(2)
 const ids = wanted.length ? wanted : Object.keys(TILES)

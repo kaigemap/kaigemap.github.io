@@ -12,6 +12,13 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x))
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t) }
 const pad2 = (n) => String(n).padStart(2, '0')
 const tpl = (id) => $(id).content.firstElementChild.cloneNode(true)
+/** What the address bar shows: the whole address on a wide screen, the short part on a phone. */
+const shownUrl = (url, short) => {
+  const u = new URL(url)
+  const path = u.pathname.replace(/\/$/, '')
+  if (!short) return u.host + path
+  return u.host === 'kaigemap.github.io' || u.host === 'github.com' ? path.replace(/^\/kaigemap(?=\/)/, '') : u.host
+}
 
 // ---------- springs (§6.2): m = 1, semi-implicit Euler in 1/120 s steps ----------
 
@@ -71,7 +78,7 @@ function makeScreen(screen, app, kind) {
   mark.setAttribute('aria-hidden', 'true')
   screen.append(mark)
   const s = { screen, img, video: null, kind, app, small: null }
-  if (app[kind] === 'video') {
+  if (app[kind] === 'video' || app[kind] === 'speaker') {
     const v = document.createElement('video')
     v.muted = true
     v.loop = true
@@ -115,6 +122,7 @@ function makePhone(app) {
     el.classList.add('missing')
     return { el, screen: null }
   }
+  if (app.phone === 'speaker') el.classList.add('speaker')
   return { el, screen: makeScreen(el.querySelector('.phone-screen'), app, 'phone') }
 }
 
@@ -630,7 +638,7 @@ function fillWall() {
     w.why.textContent = w.app.why[state.lang] || ''
     w.why.hidden = !w.why.textContent
     w.code.setAttribute('aria-label', t.code)
-    w.pc.url.querySelector('.url-text').textContent = `/${w.app.id}`
+    w.pc.url.querySelector('.url-text').textContent = shownUrl(w.app.url, true)
     w.pc.url.setAttribute('aria-label', t.open(w.app.name))
   }
 }
@@ -738,7 +746,7 @@ function setLang(code, chosen = false) {
   slots.forEach((s, i) => s.tile.setAttribute('aria-label', APPS[i].name))
   for (const p of pairs) {
     const u = p.pc.url
-    u.querySelector('.url-text').textContent = geo && !geo.wide ? `/${p.app.id}` : `kaigemap.github.io/${p.app.id}`
+    u.querySelector('.url-text').textContent = shownUrl(p.app.url, geo && !geo.wide)
     u.setAttribute('aria-label', t.open(p.app.name))
     if (p.app.phone === 'missing') p.phone.el.setAttribute('aria-label', t.phoneMissing)
   }

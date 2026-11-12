@@ -365,6 +365,9 @@ body:not(.ready) .stage { visibility: hidden; }
 .phone .bezel { height: 100%; padding: var(--bezel, 5px); border-radius: calc(var(--phR, 40px) + 4.5px); background: #111; }
 .phone-screen { height: 100%; border-radius: var(--phR, 40px); cursor: pointer; }
 .phone.missing { padding: 0; background: none; box-shadow: none; border: 1px dashed var(--ink-3); }
+/* speak-notify has no screen: a metal speaker plate stands where the phone would be (§9.6) */
+.phone.speaker .bezel { padding: 0; background: none; }
+.phone.speaker .phone-screen { border-radius: calc(var(--phR, 40px) + 4.5px); background: #E4E1DB; }
 .phone.missing .bezel { display: none; }
 
 .play-mark { display: none; }

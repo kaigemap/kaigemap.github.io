@@ -24,7 +24,7 @@ const css = `*{box-sizing:border-box;margin:0}body{-webkit-font-smoothing:antial
 const svgPat = (id, s, style = '') => `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="${style}">${pat[id](s)}</svg>`
 
 /** A full page of w x h with paper grain multiplied on top. bg: background behind rounded pieces. */
-export const page = (w, h, body, bg = 'transparent') => `<!doctype html><meta charset=utf-8><style>${css}html,body{width:${w}px;height:${h}px;background:${bg}}</style><body>${body}<svg width="${w}" height="${h}" style="position:absolute;inset:0;mix-blend-mode:multiply;pointer-events:none">${grain}<rect width="100%" height="100%" filter="url(#g)"/></svg></body>`
+export const page = (w, h, body, bg = 'transparent', radius = '0') => `<!doctype html><meta charset=utf-8><style>${css}html,body{width:${w}px;height:${h}px;background:${bg}}</style><body>${body}<svg width="${w}" height="${h}" style="position:absolute;inset:0;mix-blend-mode:multiply;pointer-events:none;border-radius:${radius}">${grain}<rect width="100%" height="100%" filter="url(#g)"/></svg></body>`
 
 /** Card face markup at 630x880, positioned at the origin (reused for small copies via scale). */
 const cardFace = (k, n) => {
@@ -39,9 +39,9 @@ ${svgPat(id, 518, 'position:absolute;left:56px;top:150px;border-radius:6px')}
 /** A card drawn at width w (scaled from 630), rotated, with a soft shadow. */
 const miniCard = (k, n, w, x, y, deg) => `<div style="position:absolute;left:${x}px;top:${y}px;width:630px;height:880px;transform-origin:0 0;transform:scale(${w / 630}) rotate(${deg}deg);box-shadow:0 18px 40px rgba(0,0,0,.28);border-radius:38px">${cardFace(k, n)}</div>`
 
-export const card = (k, n) => page(630, 880, cardFace(k, n))
+export const card = (k, n) => page(630, 880, cardFace(k, n), 'transparent', '38px')
 
-export const back = page(630, 880, `<div style="position:absolute;inset:0;background:${C.ink};border-radius:38px"></div><svg width="630" height="880" style="position:absolute;inset:0">${[...Array(9)].map((_, i) => `<ellipse cx="${250 + i * 14}" cy="${400 + i * 10}" rx="${60 + i * 62}" ry="${44 + i * 50}" fill="none" stroke="${C.paper}" stroke-opacity="${i ? 0.5 : 1}" stroke-width="${i ? 2.5 : 5}" transform="rotate(-18 ${250 + i * 14} ${400 + i * 10})"/>`).join('')}</svg><div class="fu" style="position:absolute;left:225px;top:388px;font-size:30px;font-weight:700;color:${C.paper}">L</div><div style="position:absolute;inset:26px;border:2.5px solid ${C.paper};border-radius:20px;opacity:.9"></div>`)
+export const back = page(630, 880, `<div style="position:absolute;inset:0;background:${C.ink};border-radius:38px"></div><svg width="630" height="880" style="position:absolute;inset:0">${[...Array(9)].map((_, i) => `<ellipse cx="${250 + i * 14}" cy="${400 + i * 10}" rx="${60 + i * 62}" ry="${44 + i * 50}" fill="none" stroke="${C.paper}" stroke-opacity="${i ? 0.5 : 1}" stroke-width="${i ? 2.5 : 5}" transform="rotate(-18 ${250 + i * 14} ${400 + i * 10})"/>`).join('')}</svg><div class="fu" style="position:absolute;left:225px;top:388px;font-size:30px;font-weight:700;color:${C.paper}">L</div><div style="position:absolute;inset:26px;border:2.5px solid ${C.paper};border-radius:20px;opacity:.9"></div>`, 'transparent', '38px')
 
 /** band: the colour of the title band (navy, or vermilion for the decision-board sample). */
 export const boxFront = (band = C.ink) => page(1000, 1000, `<div style="position:absolute;inset:0;background:${C.paper}"></div>
@@ -75,7 +75,7 @@ ${KINDS.map(([id], i) => svgPat(id, 80, `position:absolute;top:90px;left:${468 +
 export const cardsRow = page(2400, 1200, `<div style="position:absolute;inset:0;background:${C.paper}"></div>${[0, 1, 2, 3, 4, 5].map((k, i) => miniCard(k, DECK[k][1], 330, 90 + i * 380, 240 + (i % 2) * 30, [-4, 3, -2, 5, -3, 2][i])).join('')}`)
 
 /** Weather stickers: each pattern as a circle with a white die-cut border (for sticker apps). */
-export const sticker = (k, size = 600) => page(size, size, `<div style="position:absolute;inset:${size * 0.04}px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.04)"></div>${svgPat(KINDS[k][0], size * 0.84, `position:absolute;left:${size * 0.08}px;top:${size * 0.08}px;border-radius:50%`)}`)
+export const sticker = (k, size = 600) => page(size, size, `<div style="position:absolute;inset:${size * 0.04}px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.04)"></div>${svgPat(KINDS[k][0], size * 0.84, `position:absolute;left:${size * 0.08}px;top:${size * 0.08}px;border-radius:50%`)}`, 'transparent', '50%')
 
 export const CSV = `タイトル,本文
 晴れ,となりに雨がなければ2点。

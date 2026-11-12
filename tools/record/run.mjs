@@ -14,9 +14,11 @@ const slugs = wanted.length ? wanted : readdirSync(join(here, 'flows')).filter((
 for (const slug of slugs) {
   const flow = await import(join(here, 'flows', `${slug}.mjs`))
   const phone = slug.endsWith('.phone')
-  const s = await launch(phone ? { width: 390, height: 844, scale: 3, touch: true, ...flow.options } : { width: 1440, height: 900, scale: 2, ...flow.options })
+  const s = await launch(phone ? { width: 390, height: 844, scale: 3, touch: true, cursor: flow.cursor ?? true, ...flow.options } : { width: 1440, height: 900, scale: 2, cursor: flow.cursor ?? true, ...flow.options })
   s.captureWidth = phone ? 900 : 1600
   try {
+    if (flow.init) await s.send('Page.addScriptToEvaluateOnNewDocument', { source: flow.init })
+    if (flow.before) await flow.before(s)
     await s.open(flow.url, flow.settle ?? 1200)
     if (flow.prepare) await flow.prepare(s)
     await s.startRecording()

@@ -248,6 +248,18 @@ export async function launch({ width = 1120, height = 700, scale = 2, cursor = t
         send('Fetch.fulfillRequest', { requestId: p.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: type }, { name: 'Access-Control-Allow-Origin', value: '*' }], body }).catch(() => {})
       })
     },
+    /** Answer every request under urlPrefix with the file at the same path under dir. */
+    async serve(urlPrefix, dir) {
+      await send('Fetch.enable', { patterns: [{ urlPattern: urlPrefix + '*' }] })
+      on('Fetch.requestPaused', async (p) => {
+        if (!p.request.url.startsWith(urlPrefix)) return
+        const rel = decodeURIComponent(p.request.url.slice(urlPrefix.length).split('?')[0]).replace(/~\d+(?=\.png$)/, '')
+        const file = join(dir, rel)
+        if (!existsSync(file)) return send('Fetch.fulfillRequest', { requestId: p.requestId, responseCode: 404, body: '' }).catch(() => {})
+        const type = file.endsWith('.png') ? 'image/png' : file.endsWith('.jpg') ? 'image/jpeg' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream'
+        send('Fetch.fulfillRequest', { requestId: p.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: type }], body: readFileSync(file).toString('base64') }).catch(() => {})
+      })
+    },
     async startRecording() {
       frames = []
       on('Page.screencastFrame', async (p) => {
