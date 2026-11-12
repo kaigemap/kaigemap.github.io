@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>speak-notify (terminal, for the recording)</title>
+<!-- A made-up terminal session for the recording (not a real one): a task finishes and the project name is spoken. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #1B1A18; }
+  body { font: 26px/1.75 ui-monospace, "SF Mono", Menlo, monospace; color: #E8E4DA; padding: 72px 88px; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  .line { white-space: pre; opacity: 0; transform: translateY(4px); transition: opacity .25s, transform .25s; }
+  .line.on { opacity: 1; transform: none; }
+  .dim { color: #8F8A80; }
+  .ok { color: #93AD8E; }
+  .say { color: #E3A927; margin-top: 18px; display: flex; align-items: center; gap: 14px; }
+  .wave { display: inline-flex; gap: 5px; align-items: center; height: 26px; }
+  .wave i { width: 5px; height: 6px; border-radius: 2px; background: #E3A927; }
+  .say.on .wave i { animation: w .8s ease-in-out infinite; }
+  .wave i:nth-child(2) { animation-delay: .1s !important; } .wave i:nth-child(3) { animation-delay: .2s !important; } .wave i:nth-child(4) { animation-delay: .3s !important; }
+  @keyframes w { 50% { height: 26px; } }
+  .caret { display: inline-block; width: 13px; height: 28px; background: #E8E4DA; vertical-align: -3px; animation: b 1s steps(1) infinite; }
+  @keyframes b { 50% { opacity: 0; } }
+</style>
+<div class="line dim">~/dev/soramoyo  main</div>
+<div class="line">› カードの裏の画像を 3 種類作って</div>
+<div class="line"> </div>
+<div class="line"><span class="ok">  ✓</span> card-back-1.png を書き出しました</div>
+<div class="line"><span class="ok">  ✓</span> card-back-2.png を書き出しました</div>
+<div class="line"><span class="ok">  ✓</span> card-back-3.png を書き出しました</div>
+<div class="line"> </div>
+<div class="line">  終わりました。3 枚とも images/ にあります。</div>
+<div class="line say"><span class="wave"><i></i><i></i><i></i><i></i></span>speak-notify: 「空もよう、終わりました」</div>
+<div class="line">› <span class="caret"></span></div>
+<script>
+  const lines = [...document.querySelectorAll('.line')]
+  const at = [200, 700, 900, 1500, 1900, 2300, 2500, 3000, 3700, 6200]
+  lines.forEach((l, i) => setTimeout(() => l.classList.add('on'), at[i]))
+  setTimeout(() => document.querySelector('.say').classList.remove('on'), 6000)
+</script>

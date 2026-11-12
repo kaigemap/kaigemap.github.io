@@ -1,0 +1,20 @@
+// Main paths for ~/.claude/skills/web-tool-safety/check.mjs: turn the dial, language menu, wall and back.
+export default async (api) => {
+  await api.waitFor(`document.body.classList.contains('ready')`, 5000)
+  await api.sleep(1200)
+  await api.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))`)
+  await api.sleep(900)
+  await api.click('.slot:nth-child(3) .tile')
+  await api.sleep(900)
+  await api.click('#lang-btn')
+  await api.click('#lang-menu button[lang=ko]')
+  await api.sleep(200)
+  await api.click('#lang-btn')
+  await api.click('#lang-menu button[lang=ja]')
+  await api.click('#view-btn')
+  await api.sleep(900)
+  await api.click('.w-item:nth-child(4) .w-pair')
+  await api.sleep(1200)
+  const ok = await api.evaluate(`document.body.dataset.view === 'dial' && location.hash === '#udocards'`)
+  if (!ok) throw new Error('wall -> dial did not land on the tapped item')
+}
