@@ -10,7 +10,6 @@ const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)')
 let reduced = reduceMQ.matches
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x))
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t) }
-const pad2 = (n) => String(n).padStart(2, '0')
 const tpl = (id) => $(id).content.firstElementChild.cloneNode(true)
 /** What the address bar shows: the whole address on a wide screen, the short part on a phone. */
 const shownUrl = (url, short) => {
@@ -132,7 +131,6 @@ const pairs = APPS.map((app, i) => {
   const pc = makePc(app)
   const phone = makePhone(app)
   const title = tpl('t-title')
-  title.querySelector('.num').textContent = `${pad2(i + 1)} / ${pad2(N)}`
   title.querySelector('.year').textContent = String(app.year)
   title.querySelector('.name').textContent = app.name
   wrap.append(pc.el, phone.el, title)
@@ -146,7 +144,6 @@ const pairs = APPS.map((app, i) => {
 
 const slots = APPS.map((app, i) => {
   const el = tpl('t-tile')
-  el.querySelector('.tick-num').textContent = pad2(i + 1)
   const pos_ = el.querySelector('.tile-pos')
   const tile = el.querySelector('.tile')
   const face = el.querySelector('.tile-face')
@@ -381,7 +378,7 @@ function tick(now) {
   draw()
   const moving = state.dragging || state.wheel || !pos.done() || Math.abs(pos.v) > 0.05
   caption.classList.toggle('moving', moving)
-  if (moving) { caption.classList.remove('shown'); state.settledAt = 0 }
+  if (moving) { caption.classList.remove('shown'); state.settledAt = 0; closeWhy() }
   else if (!state.settledAt) { state.settledAt = now; onSettle() }
   const busy = moving || !ps.done() || !pp.done() || !stretch.done(1e-3) || !needle.done(0.01, 0.05) || !introPc.done() || !introPh.done() ||
     slots.some((t) => !t.hover.done(1e-3) || Math.abs(t.tlx - t.lx) > 0.05 || Math.abs(t.tly - t.ly) > 0.05)
@@ -430,10 +427,50 @@ function fillCaption() {
   if (app.repo) code.href = app.repo
   code.setAttribute('aria-label', t.code)
   const why = app.why[state.lang] || ''
+  closeWhy()
   $('why').textContent = why
   $('why').hidden = !why || geo.whyLines === 0
   placeCaption()
+  requestAnimationFrame(markLongWhy)
 }
+
+// ---------- the reason: only the first lines fit; a tap opens the whole text in place ----------
+
+const whyEl = $('why')
+function markLongWhy() {
+  const long = !whyEl.hidden && whyEl.scrollHeight > whyEl.clientHeight + 1
+  whyEl.classList.toggle('more', long)
+  if (long) { whyEl.setAttribute('role', 'button'); whyEl.tabIndex = 0; whyEl.setAttribute('aria-expanded', 'false') }
+  else { whyEl.removeAttribute('role'); whyEl.removeAttribute('tabindex'); whyEl.removeAttribute('aria-expanded') }
+}
+function openWhy() {
+  if (!whyEl.classList.contains('more') || whyEl.classList.contains('open')) return
+  const b = whyEl.getBoundingClientRect()
+  const H = stage.clientHeight
+  // grow upwards from where the short version sits, so nothing below it moves
+  // (the open card has 18px / 22px of padding offset by negative margins, so its text stays put)
+  whyEl.style.top = 'auto'
+  whyEl.style.bottom = `${Math.max(8, H - b.bottom)}px`
+  if (!geo.wide) {
+    const cw = Math.min(stage.clientWidth, 520)
+    whyEl.style.left = `${(stage.clientWidth - cw) / 2 + 38}px`
+    whyEl.style.width = `${cw - 76}px`
+  }
+  whyEl.classList.add('open')
+  whyEl.setAttribute('aria-expanded', 'true')
+}
+function closeWhy() {
+  if (!whyEl.classList.contains('open')) return
+  whyEl.classList.remove('open')
+  for (const k of ['top', 'bottom', 'left', 'width']) whyEl.style[k] = ''
+  whyEl.setAttribute('aria-expanded', 'false')
+}
+whyEl.addEventListener('click', () => (whyEl.classList.contains('open') ? closeWhy() : openWhy()))
+whyEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); whyEl.classList.contains('open') ? closeWhy() : openWhy() }
+})
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.why')) closeWhy() })
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWhy() })
 
 /** On a phone the reason goes right under the description, as many lines as fit beside the phone (§2.3). */
 function placeCaption() {
@@ -502,7 +539,7 @@ const drag = { id: null, start: 0, p0: 0, moved: false, per: 98, samples: [], su
 stage.addEventListener('pointerdown', (e) => {
   if (state.view !== 'dial' || (e.pointerType === 'mouse' && e.button !== 0)) return
   drag.suppress = false
-  if (e.target.closest('a, .lang, .lang-menu')) return
+  if (e.target.closest('a, .lang, .lang-menu, .why')) return
   const onDial = !!e.target.closest('.wheel, .tile')
   drag.id = e.pointerId
   drag.per = onDial ? geo.spacing : 220
@@ -605,11 +642,9 @@ function buildWall() {
     pairEl.append(pc.el, phone.el)
     const meta = document.createElement('p')
     meta.className = 'meta'
-    const num = document.createElement('span')
-    num.textContent = pad2(i + 1)
     const year = document.createElement('span')
     year.textContent = String(app.year)
-    meta.append(num, year)
+    meta.append(year)
     const name = document.createElement('h2')
     name.className = 'name'
     const nameText = document.createElement('span')

@@ -6,7 +6,7 @@
 // pc / phone   'video' (clip + poster), 'still' (poster only), 'missing' (empty dashed frame), 'speaker'
 // year    the year it was first made public
 // desc    one plain line: what it does (yomiyasu skill: no pretentious wording)
-// why     why it was made, in the owner's own words (70 Japanese characters at most). Empty = nothing shown.
+// why     why it was made: ja is the owner's own words, unedited; the other languages are plain translations. Empty = nothing shown.
 const empty = { ja: '', en: '', es: '', ko: '' }
 
 export const APPS = [
@@ -24,7 +24,12 @@ export const APPS = [
       es: 'Herramienta para crear imágenes de cajas de juegos de mesa',
       ko: '보드게임 상자 이미지를 만드는 도구',
     },
-    why: empty,
+    why: {
+      ja: "友達とサークルを作り、ボードゲームを作って売っている。物理のボードゲームの立体の箱を撮影するのは、実際にはイベントの直前になってしまうため、撮影環境を整えるのは大変である…",
+      en: "I run a small circle with friends; we make board games and sell them. In practice we can only photograph the real, physical box right before an event, and setting up a place to shoot it is hard…",
+      es: "Con unos amigos formamos un círculo; hacemos juegos de mesa y los vendemos. En la práctica, solo podemos fotografiar la caja física justo antes del evento, y preparar un lugar para hacer las fotos es complicado…",
+      ko: "친구들과 서클을 만들어 보드게임을 만들고 팔고 있다. 실제 보드게임 상자를 입체로 촬영할 수 있는 건 결국 행사 직전이 되어 버려서, 촬영 환경을 갖추기가 힘들다…",
+    },
   },
   {
     id: 'zatsucard',
@@ -40,7 +45,12 @@ export const APPS = [
       es: 'Herramienta para crear imágenes de cartas de prueba a partir de un CSV',
       ko: 'CSV로 테스트 플레이용 카드 이미지를 만드는 도구',
     },
-    why: empty,
+    why: {
+      ja: "友達とボードゲームを作っている。オンラインでテストプレイの用意をするにあたり、カードの内容をよく更新することになる。以前はスプレッドシートとFigmaをプラグインで繋いでexportしていたが、つい完成形のビジュアルに近づけて更新したくなるクセがあり、友人からは「もっと簡易的に」と言われていた…そこで、いかにも仮作成であるということがわかるような雑カードを用意することにした。",
+      en: "I make board games with friends. Getting ready for online playtests means updating the card text often. I used to connect a spreadsheet to Figma with a plugin and export from there, but I had a habit of pushing each update toward the finished look, and my friends kept telling me to \"keep it simpler\"… So I decided to make rough cards that obviously look temporary.",
+      es: "Hago juegos de mesa con amigos. Al preparar las partidas de prueba en línea, hay que actualizar a menudo el texto de las cartas. Antes conectaba una hoja de cálculo con Figma mediante un plugin y exportaba desde ahí, pero tenía la costumbre de acercar cada actualización al aspecto final, y mis amigos me decían «hazlo más sencillo»… Así que decidí preparar cartas rápidas que se notara a simple vista que son provisionales.",
+      ko: "친구들과 보드게임을 만들고 있다. 온라인 테스트 플레이를 준비하다 보면 카드 내용을 자주 고치게 된다. 예전에는 스프레드시트와 Figma를 플러그인으로 연결해 내보냈는데, 고칠 때마다 완성본에 가까운 모습으로 다듬고 싶어지는 버릇이 있어서 친구들에게 \"더 간단하게\"라는 말을 듣곤 했다… 그래서 누가 봐도 임시로 만든 것임을 알 수 있는 대충 만든 카드를 준비하기로 했다.",
+    },
   },
   {
     id: 'discord-streamkit-layer',
@@ -56,7 +66,12 @@ export const APPS = [
       es: 'Herramienta para cambiar el aspecto del overlay de Discord StreamKit en OBS',
       ko: 'OBS에 올리는 Discord StreamKit 오버레이의 모양을 바꾸는 도구',
     },
-    why: empty,
+    why: {
+      ja: "TRPGの動画ログや、YouTubeで友人とゲーム実況動画を作成する際、ボイスチャットはdiscord。誰が話しているのかを表示するためのツールがあるのだが、それをCSSでデコレーションするためのツール。サブアカウントを非表示にするなどの設定を手動でするのは大変なので、それを楽にしたい気持ちもあった。",
+      en: "When we make TRPG session videos or game commentary videos with friends for YouTube, our voice chat is Discord. There is a tool that shows who is talking, and this is a tool for decorating it with CSS. Setting things up by hand, like hiding sub-accounts, is a lot of work, so I also wanted to make that easier.",
+      es: "Cuando hacemos vídeos de partidas de rol o vídeos de juegos comentados con amigos para YouTube, usamos Discord para el chat de voz. Hay una herramienta que muestra quién está hablando, y esta es una herramienta para decorarla con CSS. Configurar a mano cosas como ocultar las subcuentas da mucho trabajo, así que también quería facilitar eso.",
+      ko: "TRPG 영상 로그나 친구들과 유튜브용 게임 실황 영상을 만들 때 보이스 채팅은 Discord를 쓴다. 누가 말하고 있는지 보여 주는 도구가 있는데, 그것을 CSS로 꾸미기 위한 도구다. 부계정을 숨기는 등의 설정을 손으로 하는 건 힘들어서, 그걸 편하게 하고 싶은 마음도 있었다.",
+    },
   },
   {
     id: 'udocards',
@@ -72,7 +87,12 @@ export const APPS = [
       es: 'Herramienta para crear mazos de cartas para Udonarium a partir de imágenes',
       ko: '이미지로 유도나리움용 카드 덱을 만드는 도구',
     },
-    why: empty,
+    why: {
+      ja: "zatsucardで作ったカードの画像データを、テストプレイで使うユドナリウムというアプリに読み込ませるためのツール。トランプの山札みたいなものを作るのだが、画像を都度設定するのは手間がかかる。山札データを直接作成し、ドラッグ&ドロップで読み込めるようにする",
+      en: "A tool for loading the card images made with zatsucard into Udonarium, the app we use for playtests. You build something like a deck of playing cards there, but setting each image one by one takes time. This makes the deck data directly, so it can be loaded by drag and drop.",
+      es: "Una herramienta para cargar las imágenes de cartas hechas con zatsucard en Udonarium, la aplicación que usamos en las partidas de prueba. Allí se crea algo parecido a un mazo de naipes, pero asignar cada imagen una por una lleva tiempo. Esta herramienta crea directamente los datos del mazo para cargarlos arrastrando y soltando.",
+      ko: "zatsucard로 만든 카드 이미지 데이터를, 테스트 플레이에 쓰는 유도나리움이라는 앱에 불러오기 위한 도구다. 트럼프 덱 같은 것을 만드는데, 이미지를 하나하나 설정하는 건 손이 많이 간다. 덱 데이터를 직접 만들어서 드래그 앤 드롭으로 불러올 수 있게 한다.",
+    },
   },
   {
     id: 'GameMarket-Blog-HTML-Utility',
@@ -88,7 +108,12 @@ export const APPS = [
       es: 'Herramienta que corrige las imágenes que se desbordan en el HTML del blog de Game Market',
       ko: '게임마켓 블로그용 HTML에서 넘치는 이미지를 고치는 도구',
     },
-    why: empty,
+    why: {
+      ja: "ゲームマーケットのブログでは、画像に幅と高さが固定で付き、スマホで見るとはみ出してしまう。それを直すために作った。",
+      en: "On the Game Market blog, images get a fixed width and height, so they overflow when viewed on a phone. I made this to fix that.",
+      es: "En el blog de Game Market, las imágenes reciben un ancho y un alto fijos, así que se salen de la pantalla en el móvil. La hice para arreglar eso.",
+      ko: "게임마켓 블로그에서는 이미지에 너비와 높이가 고정으로 붙어서, 스마트폰으로 보면 넘쳐 버린다. 그걸 고치려고 만들었다.",
+    },
   },
   {
     id: 'BrowserSenkou',
@@ -104,7 +129,12 @@ export const APPS = [
       es: 'Una página con una varilla de incienso',
       ko: '향 한 대가 서 있는 페이지',
     },
-    why: empty,
+    why: {
+      ja: "祖母が亡くなった際、お通夜の一晩中火を灯す線香について調べた。先に亡くなっていた祖父が、生前に(認知症のような症状の中)、火事を恐れて線香立ての灰をすべて捨ててから、自宅で線香をあげることはなかった。そこに灰を再設置して線香をあげるのも、故人の意図するところではないだろうなと思われた…。\nインターネットはいつでもONであって欲しい。ずっと点いてる線香が欲しかった。",
+      en: "When my grandmother died, I looked into the incense that is kept burning all night at the wake. My grandfather, who had died before her, had thrown out all the ash from the incense holder while he was alive (amid symptoms like dementia), afraid of a fire, and after that no incense was offered at home. Putting ash back there and offering incense didn't seem like what he would have wanted…\nI want the internet to be always on. I wanted an incense stick that keeps burning.",
+      es: "Cuando murió mi abuela, busqué información sobre el incienso que se mantiene encendido toda la noche del velatorio. Mi abuelo, que había muerto antes, había tirado en vida toda la ceniza del incensario (en medio de síntomas parecidos a la demencia) por miedo a un incendio, y desde entonces no se volvió a ofrecer incienso en casa. Volver a poner ceniza allí y ofrecer incienso no parecía algo que él hubiera querido…\nQuiero que internet esté siempre encendido. Quería un incienso que estuviera siempre encendido.",
+      ko: "할머니가 돌아가셨을 때, 밤새 불을 켜 두는 장례 전야의 향에 대해 찾아봤다. 먼저 돌아가신 할아버지는 생전에 (치매 같은 증상 속에서) 불이 날까 두려워 향로의 재를 모두 버리셨고, 그 뒤로 집에서 향을 올린 적이 없었다. 거기에 재를 다시 담고 향을 올리는 것도 고인이 바라는 일은 아닐 것 같았다….\n인터넷은 언제나 켜져 있었으면 좋겠다. 계속 켜져 있는 향이 갖고 싶었다.",
+    },
   },
   {
     id: 'sticker-sheet-simulator',
@@ -115,12 +145,17 @@ export const APPS = [
     phone: 'video',
     year: 2026,
     desc: {
-      ja: 'ステッカーシートの仕上がりを確かめるツール',
-      en: 'A tool for checking how a sticker sheet will look',
-      es: 'Herramienta para comprobar cómo quedará una hoja de pegatinas',
-      ko: '스티커 시트가 어떻게 나올지 확인하는 도구',
+      ja: "ステッカーの画像を用紙に並べて、印刷用とカット用のデータを作るツール",
+      en: "A tool that lays sticker images out on paper and makes the print and cut files",
+      es: "Herramienta que coloca imágenes de pegatinas en el papel y crea los archivos de impresión y de corte",
+      ko: "스티커 이미지를 용지에 배치하고 인쇄용과 커팅용 데이터를 만드는 도구",
     },
-    why: empty,
+    why: {
+      ja: "海外ファンコミュニティの間では、手づくりステッカーをファン同士で交換する文化があるらしい…。ファイナルファンタジー14の二次創作ガイドラインがそれを考慮した内容となっているとユーザー間で話題になり、2026年の日本ファンフェスでみんなステッカーを持ち寄るという話があった。オブジェクトを用紙に最適配置し、カッティングマシン用のパスを滑らかに縁取りし…という作業は、Adobe Illustratorを駆使しても微妙に手間のかかる作業である。それをミニアプリにしたのがこれだ。",
+      en: "Apparently overseas fan communities have a culture of trading handmade stickers with each other… It became a topic among players that the Final Fantasy XIV fan-work guidelines take this into account, and people talked about everyone bringing stickers to the 2026 Japan Fan Festival. Laying the pieces out on the paper as well as possible and tracing smooth cut paths for a cutting machine is a bit of a chore even with Adobe Illustrator. This is that work turned into a mini app.",
+      es: "Al parecer, en las comunidades de fans del extranjero existe la costumbre de intercambiar pegatinas hechas a mano… Entre los jugadores se comentó que las directrices de obras derivadas de Final Fantasy XIV tienen eso en cuenta, y se habló de que todos llevarían pegatinas al Fan Festival de Japón de 2026. Colocar las piezas en el papel de la mejor forma y trazar contornos suaves para la máquina de corte es un trabajo algo pesado incluso usando a fondo Adobe Illustrator. Esta mini app hace ese trabajo.",
+      ko: "해외 팬 커뮤니티에서는 손수 만든 스티커를 팬끼리 교환하는 문화가 있다고 한다…. 파이널 판타지 14의 2차 창작 가이드라인이 그 점을 고려한 내용이라는 게 유저들 사이에서 화제가 되었고, 2026년 일본 팬 페스티벌에 다들 스티커를 가져오자는 이야기가 있었다. 오브젝트를 용지에 최적으로 배치하고, 커팅 머신용 패스를 매끄럽게 따는… 작업은 Adobe Illustrator를 능숙하게 써도 은근히 손이 가는 일이다. 그것을 미니 앱으로 만든 것이 이것이다.",
+    },
   },
   {
     id: 'fuchimoji',
@@ -131,12 +166,17 @@ export const APPS = [
     phone: 'video',
     year: 2026,
     desc: {
-      ja: 'フチ付きの文字の画像を作るツール',
-      en: 'A tool that makes images of outlined text',
-      es: 'Herramienta para crear imágenes de texto con contorno',
-      ko: '테두리가 있는 글자 이미지를 만드는 도구',
+      ja: "画像のふちに沿って文字を入れるツール",
+      en: "A tool that puts text along the edge of an image",
+      es: "Herramienta que coloca texto siguiendo el borde de una imagen",
+      ko: "이미지 가장자리를 따라 글자를 넣는 도구",
     },
-    why: empty,
+    why: {
+      ja: "ステッカーシートシミュレーターの説明で触れたFF14の利用規約には、権利表記またはURLを記述、とある。形に沿って入れたらかわいいのだが、地味に手間のかかる作業であるため、同様のモチベーションで作った。",
+      en: "The FF14 terms I mentioned for Sticker Sheet Simulator say you must include a copyright notice or a URL. It looks cute when the text follows the shape, but doing that is quietly tedious, so I made this for the same reason.",
+      es: "Las condiciones de FF14 que mencioné en Sticker Sheet Simulator piden incluir el aviso de derechos o una URL. Queda bonito si el texto sigue la forma, pero hacerlo es un trabajo discretamente pesado, así que la hice por el mismo motivo.",
+      ko: "스티커 시트 시뮬레이터 설명에서 언급한 FF14 이용 약관에는 권리 표기 또는 URL을 적으라고 되어 있다. 모양을 따라 넣으면 귀여운데, 은근히 손이 가는 작업이라 같은 동기로 만들었다.",
+    },
   },
   {
     id: 'sticker-split',
@@ -147,12 +187,17 @@ export const APPS = [
     phone: 'still',
     year: 2026,
     desc: {
-      ja: 'ステッカーの画像を切り分けるツール',
-      en: 'A tool that splits sticker images',
-      es: 'Herramienta para dividir imágenes de pegatinas',
-      ko: '스티커 이미지를 나누는 도구',
+      ja: "1枚に描いた複数の絵を、1つずつの画像に分けるツール",
+      en: "A tool that splits several drawings on one canvas into separate images",
+      es: "Herramienta que separa varios dibujos de un mismo lienzo en imágenes individuales",
+      ko: "한 캔버스에 그린 여러 그림을 하나씩 따로 된 이미지로 나누는 도구",
     },
-    why: empty,
+    why: {
+      ja: "ステッカーシートシミュレーターでステッカー作りにハマってしまい。iPadでお絵描きしたミニキャラをステッカーにして遊んでいた…が、イラストをファイルごとに作成するのではなく、ひとつのキャンバスに複数のイラストを描いてしまっていた！ それらをよしなに分割し、別々のファイルにするためのミニアプリ。",
+      en: "I got hooked on making stickers with Sticker Sheet Simulator, and was turning little characters I drew on my iPad into stickers… but instead of making one file per drawing, I had drawn several on a single canvas! This mini app splits them up nicely into separate files.",
+      es: "Me enganché a hacer pegatinas con Sticker Sheet Simulator y convertía en pegatinas los personajitos que dibujaba en el iPad… pero en vez de hacer un archivo por dibujo, ¡había dibujado varios en un solo lienzo! Esta mini app los separa como corresponde en archivos distintos.",
+      ko: "스티커 시트 시뮬레이터로 스티커 만들기에 빠져서, iPad로 그린 미니 캐릭터를 스티커로 만들며 놀고 있었다… 그런데 그림을 파일마다 따로 만들지 않고 캔버스 하나에 여러 개를 그려 버렸다! 그것들을 적당히 나눠서 각각의 파일로 만들어 주는 미니 앱.",
+    },
   },
   {
     id: 'ocbox',
@@ -163,28 +208,17 @@ export const APPS = [
     phone: 'video',
     year: 2026,
     desc: {
-      ja: 'TRPG のキャラクターシートを自分の Dropbox に保存するツール',
-      en: 'A tool that saves TRPG character sheets to your own Dropbox',
-      es: 'Herramienta para guardar hojas de personaje de rol en tu propio Dropbox',
-      ko: 'TRPG 캐릭터 시트를 내 Dropbox에 저장하는 도구',
+      ja: "TRPG のキャラクターの設定とシートを、自分の Dropbox にまとめておくツール",
+      en: "A tool that keeps your TRPG characters' backgrounds and sheets together in your own Dropbox",
+      es: "Herramienta que reúne los trasfondos y las hojas de tus personajes de rol en tu propio Dropbox",
+      ko: "TRPG 캐릭터 설정과 시트를 내 Dropbox에 모아 두는 도구",
     },
-    why: empty,
-  },
-  {
-    id: 'oshinagaki-generator',
-    name: 'Oshinagaki Generator',
-    url: 'https://oshinagaki-generator.pages.dev/',
-    repo: '',
-    pc: 'video',
-    phone: 'video',
-    year: 2026,
-    desc: {
-      ja: 'イベント用のお品書きと値札の画像を作るツール',
-      en: 'A tool that makes menu and price tag images for events',
-      es: 'Herramienta para crear imágenes de listas de productos y etiquetas de precio para eventos',
-      ko: '행사용 메뉴판과 가격표 이미지를 만드는 도구',
+    why: {
+      ja: "2026年10月時点では、TRPGを友人とすることは少なくなっていた…。一方で、自分のキャラクターの設定やゲームに必要なキャラクターシートは外部のアプリにデータが置きっぱなしになっており、しかもwebアプリへのハッキングやら脆弱性やらで、いつサービスダウンしてもおかしくない状況が発生した。きっと知らずのうちに自分のキャラクターデータを失ってしまうのであろう…危惧した私は、dropbox直繋ぎでそれらのキャラクターデータを集めることにした。元々dropboxに予備のデータはあったが、イラストなどの場所が散らばってしまっていたため、それを集約する目的もある。",
+      en: "By October 2026, I wasn't playing TRPGs with friends much anymore… Meanwhile, my characters' backgrounds and the character sheets needed for play were left sitting in outside apps, and with hacks and vulnerabilities hitting web apps, those services could go down at any moment. I would surely lose my character data without even noticing… Worried about that, I decided to gather it all through a direct connection to Dropbox. I already had backups in Dropbox, but the illustrations and such were scattered, so it is also for bringing them together in one place.",
+      es: "En octubre de 2026 ya casi no jugaba a rol con mis amigos… Por otro lado, los trasfondos de mis personajes y las hojas de personaje necesarias para jugar seguían guardados en aplicaciones externas, y con los hackeos y las vulnerabilidades de las aplicaciones web, esos servicios podían caerse en cualquier momento. Seguro que acabaría perdiendo los datos de mis personajes sin darme cuenta… Con esa preocupación, decidí reunirlos conectando directamente con Dropbox. Ya tenía copias en Dropbox, pero las ilustraciones y demás estaban dispersas, así que también sirve para juntarlo todo.",
+      ko: "2026년 10월 무렵에는 친구들과 TRPG를 하는 일이 줄어 있었다…. 한편 내 캐릭터 설정이나 게임에 필요한 캐릭터 시트는 외부 앱에 데이터가 그대로 놓여 있었고, 게다가 웹 앱 해킹이나 취약점 문제로 언제 서비스가 멈춰도 이상하지 않은 상황이 생겼다. 분명 나도 모르는 사이에 캐릭터 데이터를 잃어버리겠지… 그게 걱정되어 Dropbox에 직접 연결해 캐릭터 데이터를 모으기로 했다. 원래 Dropbox에 예비 데이터가 있었지만 일러스트 등의 위치가 흩어져 있어서, 그것을 한데 모으려는 목적도 있다.",
     },
-    why: empty,
   },
   {
     id: 'claude-skill-decision-board',
@@ -200,7 +234,12 @@ export const APPS = [
       es: 'Una skill de Claude Code que pone las preguntas de Claude en una página para responderlas eligiendo',
       ko: 'Claude의 질문을 페이지에 모아 골라서 답할 수 있게 하는 Claude Code 스킬',
     },
-    why: empty,
+    why: {
+      ja: "vscodeの拡張でClaude codeを使っているが、Claudeからの質問や見た目の判断が、本人のログで流れてしまい、涙していた。\nこのスキルを使えば、とりあえずここ見て答えればOKになるので、判断コストが下がる。",
+      en: "I use Claude Code through the VS Code extension, but Claude's questions and the visual decisions it asked me for would scroll away in my own log, and I was in tears.\nWith this skill I can just look here and answer, which lowers the cost of deciding.",
+      es: "Uso Claude Code con la extensión de VS Code, pero las preguntas de Claude y las decisiones visuales que me pedía se perdían entre mis propios mensajes, y acababa llorando.\nCon esta skill basta con mirar aquí y responder, así que decidir cuesta menos.",
+      ko: "VS Code 확장으로 Claude Code를 쓰고 있는데, Claude의 질문이나 디자인 판단 요청이 내 로그에 묻혀 흘러가 버려서 울고 있었다.\n이 스킬을 쓰면 일단 여기만 보고 답하면 되니까 판단하는 부담이 줄어든다.",
+    },
   },
   {
     id: 'claude-skill-speak-notify',
@@ -216,6 +255,11 @@ export const APPS = [
       es: 'Una skill de Claude Code que dice en voz alta el nombre del proyecto cuando Claude pregunta o termina',
       ko: 'Claude가 질문하거나 작업을 마치면 프로젝트 이름을 소리 내어 읽어 주는 Claude Code 스킬',
     },
-    why: empty,
+    why: {
+      ja: "複数のプロジェクトを往復していると、どの窓が作業中で、どの窓が質問回答待ちなのかわからなくなった。このスキルで声で呼び戻してもらうようになり、作業に戻るきっかけとなる。",
+      en: "Going back and forth between several projects, I lost track of which window was still working and which one was waiting for my answer. With this skill a voice calls me back, and that becomes my cue to return to the work.",
+      es: "Al ir y venir entre varios proyectos, perdía la cuenta de qué ventana seguía trabajando y cuál esperaba mi respuesta. Con esta skill una voz me llama, y eso me da el empujón para volver al trabajo.",
+      ko: "여러 프로젝트를 오가다 보면 어느 창이 작업 중이고 어느 창이 질문에 대한 답을 기다리는지 알 수 없게 되었다. 이 스킬로 목소리로 불러 주게 되면서 작업으로 돌아가는 계기가 된다.",
+    },
   },
 ]

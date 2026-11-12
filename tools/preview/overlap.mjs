@@ -12,7 +12,8 @@ for (const [w, h] of [[390, 760], [360, 664]]) {
     await s.open(`http://localhost:8123/?lang=ja&view=dial&_=${++n}#${a.id}`, 1800)
     // find text boxes that overlap each other or the frames
     const hits = await s.eval(`(() => {
-      const r = (e) => (['H2', 'SPAN', 'P'].includes(e.tagName) ? (() => { const rg = document.createRange(); rg.selectNodeContents(e); return rg.getBoundingClientRect() })() : e.getBoundingClientRect())
+      // text is measured by its glyphs (a Range), except the reason, whose extra lines are clipped and hidden
+      const r = (e) => (['H2', 'SPAN', 'P'].includes(e.tagName) && e.id !== 'why' ? (() => { const rg = document.createRange(); rg.selectNodeContents(e); return rg.getBoundingClientRect() })() : e.getBoundingClientRect())
       const pair = [...document.querySelectorAll('.pair.on')].find((p) => +getComputedStyle(p.querySelector('.title')).opacity > 0.9)
       const textBox = (e) => { const rg = document.createRange(); rg.selectNodeContents(e); return rg }
       const els = { name: pair?.querySelector('.name'), meta: pair?.querySelector('.meta'), desc: document.querySelector('#desc'), why: document.querySelector('#why'), phone: pair?.querySelector('.phone'), pc: pair?.querySelector('.pc'), wheel: document.querySelector('.wheel') }

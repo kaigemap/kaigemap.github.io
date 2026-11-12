@@ -194,19 +194,6 @@ body:not(.ready) .stage { visibility: hidden; }
 .tick.s2 { transform: rotate(calc(var(--step) * .4)); }
 .tick.s3 { transform: rotate(calc(var(--step) * .6)); }
 .tick.s4 { transform: rotate(calc(var(--step) * .8)); }
-.tick-num {
-  position: absolute;
-  left: calc(var(--R) - 25px);
-  top: -6px;
-  font-family: var(--mono);
-  font-size: 8.5px;
-  line-height: 12px;
-  letter-spacing: .06em;
-  color: var(--ink-2);
-  opacity: .75;
-  transform: rotate(90deg);
-}
-.stage[data-shape="tall"] .tick-num { left: calc(var(--R) - 27px); }
 
 .tile-pos {
   position: absolute;
@@ -427,12 +414,32 @@ body.reduced .screen.playing .play-mark { display: none; }
   line-height: 1.85;
   letter-spacing: .02em;
   color: var(--ink-2);
+  white-space: pre-line;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--whyLines, 3);
   overflow: hidden;
 }
 .stage[data-shape="tall"] .why { font-size: 12px; }
+/* a long reason can be opened in full: the clamped lines end in an ellipsis, and a tap opens a card in place */
+.why.more { pointer-events: auto; cursor: pointer; border-radius: 6px; transition: opacity .26s ease-out, color .2s; }
+@media (hover: hover) { .why.more:hover { color: var(--ink); } }
+.why.open {
+  z-index: 60;
+  display: block;
+  max-height: min(70svh, 560px);
+  overflow: auto;
+  padding: 18px 22px;
+  margin: -18px -22px;
+  border-radius: 14px;
+  background: var(--paper-2);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line), 0 18px 44px -14px rgba(var(--shadow-rgb), .35);
+  -webkit-line-clamp: unset;
+  transform-origin: 30% 100%;
+  animation: why-open .42s cubic-bezier(.2, .9, .3, 1.12);
+}
+@keyframes why-open { from { opacity: 0; transform: translateY(8px) scale(.97); } }
 
 /* ---------- wall (overview) ---------- */
 
@@ -459,7 +466,7 @@ body.reduced .screen.playing .play-mark { display: none; }
 .w-item .meta { margin-top: 16px; }
 .w-item .name { margin-top: 6px; font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
 .w-item .w-desc { margin-top: 6px; font-size: 12px; }
-.w-item .w-why { margin-top: 6px; font-family: var(--mincho); font-size: 12px; line-height: 1.85; color: var(--ink-2); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.w-item .w-why { margin-top: 8px; font-family: var(--mincho); font-size: 12px; line-height: 1.85; letter-spacing: .02em; color: var(--ink-2); white-space: pre-line; }
 @media (hover: hover) { .w-item .w-pair { transition: transform .45s cubic-bezier(.2, .9, .3, 1.15); } .w-item:hover .w-pair { transform: translateY(-4px); } }
 
 ::view-transition-group(*) { animation-duration: .48s; animation-timing-function: linear(0, .065, .212, .389, .564, .717, .839, .929, .989, 1.026, 1.044, 1.049, 1.047, 1.04, 1.031, 1.022, 1.015, 1.008, 1.004, 1.001, 1); }
